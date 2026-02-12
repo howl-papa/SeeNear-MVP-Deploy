@@ -131,12 +131,20 @@ export default function MatchingPage() {
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => router.push('/')}
-                        className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
-                    >
-                        홈으로 돌아가기
-                    </button>
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => router.push('/jobs')}
+                            className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
+                        >
+                            💼 일자리 시작하기
+                        </button>
+                        <button
+                            onClick={() => router.push('/')}
+                            className="w-full bg-white/20 backdrop-blur-sm border-2 border-white text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-white/30 transition-all active:scale-95"
+                        >
+                            홈으로 돌아가기
+                        </button>
+                    </div>
                 </div>
             </div>
         )
