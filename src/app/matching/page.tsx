@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Phone, PhoneOff, CheckCircle2, MapPin } from "lucide-react"
 import dynamic from 'next/dynamic'
@@ -12,8 +12,13 @@ export default function MatchingPage() {
     const router = useRouter()
     const [status, setStatus] = useState<'analyzing' | 'calling' | 'accepted'>('analyzing')
     const [logs, setLogs] = useState<string[]>([])
+    const hasRunRef = useRef(false)
 
     useEffect(() => {
+        // Prevent duplicate execution in React StrictMode
+        if (hasRunRef.current) return
+        hasRunRef.current = true
+
         // Simulate matching process
         const logMessages = [
             "🔍 후보자 분석 중...",
@@ -22,14 +27,21 @@ export default function MatchingPage() {
             "📞 연결 시도 중..."
         ]
 
+        const timeouts: NodeJS.Timeout[] = []
+
         logMessages.forEach((msg, idx) => {
-            setTimeout(() => {
+            const timeout = setTimeout(() => {
                 setLogs(prev => [...prev, msg])
                 if (idx === logMessages.length - 1) {
                     setTimeout(() => setStatus('calling'), 1000)
                 }
             }, idx * 800)
+            timeouts.push(timeout)
         })
+
+        return () => {
+            timeouts.forEach(timeout => clearTimeout(timeout))
+        }
     }, [])
 
     useEffect(() => {
