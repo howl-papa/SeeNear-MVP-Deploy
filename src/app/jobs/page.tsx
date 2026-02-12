@@ -97,15 +97,19 @@ export default function JobsPage() {
 
     useEffect(() => {
         if (callStatus === 'calling' && selectedJob) {
-            // Text-to-speech for incoming call
-            const utterance = new SpeechSynthesisUtterance(`${selectedJob.requester}님으로부터 전화가 왔습니다. 수락하시겠습니까?`)
-            utterance.lang = 'ko-KR'
-            window.speechSynthesis.speak(utterance)
+            // Text-to-speech for incoming call (with error handling for mobile)
+            try {
+                if (typeof window !== 'undefined' && window.speechSynthesis) {
+                    const utterance = new SpeechSynthesisUtterance(`${selectedJob.requester}님으로부터 전화가 왔습니다. 수락하시겠습니까?`)
+                    utterance.lang = 'ko-KR'
+                    window.speechSynthesis.speak(utterance)
+                }
+            } catch (error) {
+                // Silently fail on mobile devices that don't support speech synthesis
+                console.error('Speech synthesis not supported:', error)
+            }
         }
     }, [callStatus, selectedJob])
-
-    // Debug logging
-    console.log('Current state:', { callStatus, selectedJob: selectedJob?.title })
 
     // Incoming Call Screen
     if (callStatus === 'calling' && selectedJob) {

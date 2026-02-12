@@ -43,12 +43,20 @@ export default function MatchingPage() {
         }
     }, [])
 
+
     useEffect(() => {
         if (status === 'calling') {
-            // Text-to-speech for incoming call
-            const utterance = new SpeechSynthesisUtterance("김철수 선생님으로부터 전화가 왔습니다. 수락하시겠습니까?")
-            utterance.lang = 'ko-KR'
-            window.speechSynthesis.speak(utterance)
+            // Text-to-speech for incoming call (with error handling for mobile)
+            try {
+                if (typeof window !== 'undefined' && window.speechSynthesis) {
+                    const utterance = new SpeechSynthesisUtterance("김철수 선생님으로부터 전화가 왔습니다. 수락하시겠습니까?")
+                    utterance.lang = 'ko-KR'
+                    window.speechSynthesis.speak(utterance)
+                }
+            } catch (error) {
+                // Silently fail on mobile devices that don't support speech synthesis
+                console.error('Speech synthesis not supported:', error)
+            }
         }
     }, [status])
 
