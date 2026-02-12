@@ -48,13 +48,13 @@ export default function SeniorPage() {
                                 key={item.id}
                                 onClick={() => handleCheckToggle(item.id)}
                                 className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${checkedItems.includes(item.id)
-                                        ? 'border-orange-400 bg-orange-50'
-                                        : 'border-stone-200 hover:border-orange-200'
+                                    ? 'border-orange-400 bg-orange-50'
+                                    : 'border-stone-200 hover:border-orange-200'
                                     }`}
                             >
                                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${checkedItems.includes(item.id)
-                                        ? 'border-orange-500 bg-orange-500'
-                                        : 'border-stone-300'
+                                    ? 'border-orange-500 bg-orange-500'
+                                    : 'border-stone-300'
                                     }`}>
                                     {checkedItems.includes(item.id) && (
                                         <CheckCircle2 size={20} className="text-white" />
@@ -69,8 +69,8 @@ export default function SeniorPage() {
                         onClick={handleNext}
                         disabled={checkedItems.length < 3}
                         className={`w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${checkedItems.length >= 3
-                                ? 'bg-orange-500 hover:bg-orange-600 text-white active:scale-95'
-                                : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                            ? 'bg-orange-500 hover:bg-orange-600 text-white active:scale-95'
+                            : 'bg-stone-200 text-stone-400 cursor-not-allowed'
                             }`}
                     >
                         {checkedItems.length < 3 ? `최소 3개 선택 (${checkedItems.length}/6)` : '다음 단계로'}
@@ -135,13 +135,19 @@ export default function SeniorPage() {
 
                     <div className="space-y-3">
                         <button
-                            onClick={() => router.push('/')}
+                            onClick={() => router.push('/jobs')}
                             className="w-full bg-white text-orange-500 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95"
+                        >
+                            💼 일자리 시작하기
+                        </button>
+                        <button
+                            onClick={() => router.push('/')}
+                            className="w-full bg-white/20 backdrop-blur-sm border-2 border-white text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-white/30 transition-all active:scale-95"
                         >
                             홈으로 돌아가기
                         </button>
-                        <p className="text-white/80 text-sm">
-                            프로필이 저장되었습니다. 이제 일자리 매칭을 기다려주세요!
+                        <p className="text-white/80 text-sm text-center">
+                            프로필이 저장되었습니다. 바로 일자리를 찾아보세요!
                         </p>
                     </div>
                 </div>
