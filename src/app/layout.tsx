@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     description: "선생님들의 경험과 이웃의 필요를 연결하는 AI 기반 돌봄 매칭 플랫폼",
     images: [
       {
-        url: "/og-image.png",
+        url: "/icon.svg",
         width: 1200,
         height: 630,
         alt: "SeeNear - 이웃과 함께하는 따뜻한 돌봄 서비스",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SeeNear - 이웃과 함께하는 따뜻한 돌봄 서비스",
     description: "선생님들의 경험과 이웃의 필요를 연결하는 AI 기반 돌봄 매칭 플랫폼",
-    images: ["/og-image.png"],
+    images: ["/icon.svg"],
     creator: "@seenear",
   },
   robots: {
