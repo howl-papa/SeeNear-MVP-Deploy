@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Shield, ShieldCheck, User, MapPin, Award } from "lucide-react"
 
 // Mock Candidates
@@ -40,6 +41,7 @@ const QUICK_SELECT_CATEGORIES = [
 const UNSAFE_KEYWORDS = ["술", "대리", "아빠", "엄마", "렌탈"]
 
 export default function DemanderPage() {
+    const router = useRouter()
     const [request, setRequest] = useState("")
     const [isSafe, setIsSafe] = useState(true)
 
@@ -117,7 +119,11 @@ export default function DemanderPage() {
                     <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                         <h2 className="text-lg font-bold text-stone-800">추천 후보</h2>
                         {CANDIDATES.map(candidate => (
-                            <div key={candidate.id} className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 hover:shadow-md transition-shadow">
+                            <div
+                                key={candidate.id}
+                                onClick={() => router.push('/matching')}
+                                className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 hover:shadow-md transition-all cursor-pointer hover:border-orange-200 active:scale-[0.98]"
+                            >
                                 <div className="flex items-start gap-4">
                                     <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <User className="w-7 h-7 text-orange-500" />
@@ -126,8 +132,8 @@ export default function DemanderPage() {
                                         <div className="flex items-center gap-2 mb-1">
                                             <h3 className="font-bold text-lg text-stone-800">{candidate.name}</h3>
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${candidate.badge === 'Gold'
-                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                    : 'bg-slate-100 text-slate-700'
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : 'bg-slate-100 text-slate-700'
                                                 }`}>
                                                 <Award size={10} className="inline mr-0.5" />
                                                 {candidate.badge}
