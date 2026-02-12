@@ -81,6 +81,9 @@ export default function Home() {
             <span>Map Simulation Control</span>
           </Link>
         </div>
+        <div className="mt-12 flex items-center gap-2 opacity-50">
+          <span>SeeNear MVP / DeV by Yongrak</span>
+        </div>
       </main>
     </div>
   )

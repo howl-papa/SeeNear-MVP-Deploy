@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Phone, PhoneOff, CheckCircle2, MapPin } from "lucide-react"
 import dynamic from 'next/dynamic'
@@ -12,12 +12,11 @@ export default function MatchingPage() {
     const router = useRouter()
     const [status, setStatus] = useState<'analyzing' | 'calling' | 'accepted'>('analyzing')
     const [logs, setLogs] = useState<string[]>([])
-    const hasRunRef = useRef(false)
 
     useEffect(() => {
-        // Prevent duplicate execution in React StrictMode
-        if (hasRunRef.current) return
-        hasRunRef.current = true
+        // Reset state on mount
+        setStatus('analyzing')
+        setLogs([])
 
         // Simulate matching process
         const logMessages = [
@@ -131,20 +130,12 @@ export default function MatchingPage() {
                         </div>
                     </div>
 
-                    <div className="space-y-3">
-                        <button
-                            onClick={() => router.push('/jobs')}
-                            className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
-                        >
-                            💼 일자리 시작하기
-                        </button>
-                        <button
-                            onClick={() => router.push('/')}
-                            className="w-full bg-white/20 backdrop-blur-sm border-2 border-white text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-white/30 transition-all active:scale-95"
-                        >
-                            홈으로 돌아가기
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
+                    >
+                        홈으로 돌아가기
+                    </button>
                 </div>
             </div>
         )

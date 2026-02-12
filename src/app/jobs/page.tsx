@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, Clock, Coins, CheckCircle2, Briefcase, Home, Leaf } from "lucide-react"
+import { MapPin, Clock, Coins, CheckCircle2, Briefcase, Home, Leaf, Phone, PhoneOff } from "lucide-react"
 
 // Mock job listings
 const JOB_LISTINGS = [
@@ -15,8 +15,9 @@ const JOB_LISTINGS = [
         time: "오후 3-4시",
         pay: "15,000원/시간",
         description: "귀여운 강아지와 함께 공원 산책해주실 분을 찾습니다.",
-        requester: "김영희님",
-        distance: "250m"
+        requester: "김영희",
+        distance: "250m",
+        message: "안녕하세요! 반려견 산책 도와주실 수 있나요? 30년 경력으로 믿고 맡겨주세요."
     },
     {
         id: 2,
@@ -27,8 +28,9 @@ const JOB_LISTINGS = [
         time: "오전 10-12시",
         pay: "20,000원/시간",
         description: "간단한 반찬 만들기를 도와주실 분을 구합니다.",
-        requester: "박민수님",
-        distance: "400m"
+        requester: "박민수",
+        distance: "400m",
+        message: "반찬 만들기 도와주시면 감사하겠습니다. 경험 많으신 분을 찾고 있어요!"
     },
     {
         id: 3,
@@ -39,8 +41,9 @@ const JOB_LISTINGS = [
         time: "아침 9-10시",
         pay: "12,000원/시간",
         description: "매주 화요일 분리수거를 도와주실 분을 찾습니다.",
-        requester: "이철수님",
-        distance: "150m"
+        requester: "이철수",
+        distance: "150m",
+        message: "매주 화요일 분리수거 도와주실 수 있으신가요? 가까운 거리입니다!"
     },
     {
         id: 4,
@@ -51,8 +54,9 @@ const JOB_LISTINGS = [
         time: "오전 8-11시",
         pay: "18,000원/시간",
         description: "식당에서 간단한 재료 손질을 도와주실 분을 구합니다.",
-        requester: "최영수님",
-        distance: "600m"
+        requester: "최영수",
+        distance: "600m",
+        message: "식당 재료 손질 도와주실 분을 찾습니다. 경력 있으신 분 환영합니다!"
     }
 ]
 
@@ -62,19 +66,135 @@ export default function JobsPage() {
     const router = useRouter()
     const [selectedCategory, setSelectedCategory] = useState("전체")
     const [appliedJobs, setAppliedJobs] = useState<number[]>([])
+    const [callStatus, setCallStatus] = useState<'none' | 'calling' | 'accepted'>('none')
+    const [selectedJob, setSelectedJob] = useState<typeof JOB_LISTINGS[0] | null>(null)
 
     const filteredJobs = selectedCategory === "전체"
         ? JOB_LISTINGS
         : JOB_LISTINGS.filter(job => job.category === selectedCategory)
 
     const handleApply = (jobId: number) => {
+        const job = JOB_LISTINGS.find(j => j.id === jobId)
+        if (!job) return
+
         setAppliedJobs(prev => [...prev, jobId])
-        // Simulate application success
+        setSelectedJob(job)
+
+        // Show incoming call after 3 seconds
         setTimeout(() => {
-            alert("지원이 완료되었습니다! 요청자가 곧 연락드릴 예정입니다.")
-        }, 500)
+            setCallStatus('calling')
+        }, 3000)
     }
 
+    const handleAccept = () => {
+        setCallStatus('accepted')
+    }
+
+    const handleDecline = () => {
+        setCallStatus('none')
+        setSelectedJob(null)
+    }
+
+    useEffect(() => {
+        if (callStatus === 'calling' && selectedJob) {
+            // Text-to-speech for incoming call
+            const utterance = new SpeechSynthesisUtterance(`${selectedJob.requester}님으로부터 전화가 왔습니다. 수락하시겠습니까?`)
+            utterance.lang = 'ko-KR'
+            window.speechSynthesis.speak(utterance)
+        }
+    }, [callStatus, selectedJob])
+
+    // Debug logging
+    console.log('Current state:', { callStatus, selectedJob: selectedJob?.title })
+
+    // Incoming Call Screen
+    if (callStatus === 'calling' && selectedJob) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center p-6">
+                <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in">
+                    <div className="w-32 h-32 bg-white rounded-full mx-auto flex items-center justify-center shadow-2xl animate-pulse">
+                        <span className="text-6xl">👴</span>
+                    </div>
+
+                    <div className="space-y-2">
+                        <h1 className="text-4xl font-bold text-white drop-shadow-lg">{selectedJob.requester} 선생님</h1>
+                        <p className="text-xl text-white/90">전화가 왔습니다</p>
+                        <div className="flex items-center justify-center gap-2 text-white/80 text-sm">
+                            <MapPin size={16} />
+                            <span>{selectedJob.location}</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 text-white">
+                        <p className="text-lg leading-relaxed">
+                            "{selectedJob.message}"
+                        </p>
+                    </div>
+
+                    <div className="flex gap-4 justify-center pt-4">
+                        <button
+                            onClick={handleDecline}
+                            className="w-20 h-20 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-95"
+                        >
+                            <PhoneOff size={32} className="text-white" />
+                        </button>
+                        <button
+                            onClick={handleAccept}
+                            className="w-20 h-20 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-95 animate-bounce"
+                        >
+                            <Phone size={32} className="text-white" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Job Accepted Screen
+    if (callStatus === 'accepted' && selectedJob) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center p-6">
+                <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in">
+                    <div className="flex justify-center">
+                        <CheckCircle2 size={100} className="text-white drop-shadow-2xl" />
+                    </div>
+
+                    <div className="space-y-4">
+                        <h1 className="text-4xl font-bold text-white drop-shadow-lg">일자리 확정!</h1>
+                        <p className="text-xl text-white/90">{selectedJob.requester}님과 연결되었습니다</p>
+                    </div>
+
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 space-y-3 text-white">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm opacity-80">일자리</span>
+                            <span className="font-bold">{selectedJob.title}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm opacity-80">근무 시간</span>
+                            <span className="font-bold">{selectedJob.time}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm opacity-80">시급</span>
+                            <span className="font-bold text-yellow-200">{selectedJob.pay}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm opacity-80">위치</span>
+                            <span className="font-bold">{selectedJob.location}</span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => router.push('/')}
+                        className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
+                    >
+                        홈으로 돌아가기
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    // Job Listings Screen
     return (
         <div className="min-h-screen bg-stone-50 p-6 flex flex-col">
             <div className="max-w-2xl w-full mx-auto space-y-6">
@@ -99,8 +219,8 @@ export default function JobsPage() {
                                 key={category}
                                 onClick={() => setSelectedCategory(category)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === category
-                                        ? 'bg-orange-500 text-white shadow-md'
-                                        : 'bg-white text-stone-600 border border-stone-200 hover:border-orange-300'
+                                    ? 'bg-orange-500 text-white shadow-md'
+                                    : 'bg-white text-stone-600 border border-stone-200 hover:border-orange-300'
                                     }`}
                             >
                                 {category}
@@ -152,7 +272,7 @@ export default function JobsPage() {
                                                     <span className="font-bold text-green-600">{job.pay}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-stone-500">
-                                                    <span className="text-xs">요청자: {job.requester}</span>
+                                                    <span className="text-xs">요청자: {job.requester}님</span>
                                                 </div>
                                             </div>
 
@@ -160,8 +280,8 @@ export default function JobsPage() {
                                                 onClick={() => handleApply(job.id)}
                                                 disabled={isApplied}
                                                 className={`w-full py-3 rounded-xl font-bold text-base transition-all ${isApplied
-                                                        ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                                                        : 'bg-orange-500 text-white hover:bg-orange-600 active:scale-[0.98] shadow-sm'
+                                                    ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                                                    : 'bg-orange-500 text-white hover:bg-orange-600 active:scale-[0.98] shadow-sm'
                                                     }`}
                                             >
                                                 {isApplied ? (
@@ -188,7 +308,7 @@ export default function JobsPage() {
                         일자리 지원 안내
                     </h3>
                     <ul className="text-sm text-stone-600 space-y-1">
-                        <li>• 지원하시면 요청자가 24시간 내에 연락드립니다</li>
+                        <li>• 지원하시면 요청자가 곧 연락드립니다</li>
                         <li>• 가까운 거리의 일자리부터 추천됩니다</li>
                         <li>• 안전한 일자리만 엄선하여 제공합니다</li>
                     </ul>
