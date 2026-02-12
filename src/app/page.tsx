@@ -10,7 +10,7 @@ export default function Home() {
       {/* Navigation / Logo Area */}
       <nav className="p-6 flex justify-between items-center max-w-5xl mx-auto w-full">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold">S</div>
+          <Image src="/icon.svg" alt="SeeNear" width={32} height={32} className="rounded-lg" />
           <span className="text-xl font-bold text-stone-800 tracking-tight">SeeNear</span>
         </div>
         <div className="text-sm font-medium text-stone-500">

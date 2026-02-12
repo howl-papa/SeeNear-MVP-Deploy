@@ -19,6 +19,15 @@ export const metadata: Metadata = {
   authors: [{ name: "Yongrak Park" }],
   creator: "Yongrak Park",
   publisher: "SeeNear",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.svg", sizes: "any" },
+    ],
+    apple: [
+      { url: "/icon.svg", sizes: "180x180", type: "image/svg+xml" },
+    ],
+  },
   openGraph: {
     type: "website",
     locale: "ko_KR",
