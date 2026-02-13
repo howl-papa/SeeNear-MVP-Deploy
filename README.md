@@ -46,6 +46,22 @@
 - 💼 **일자리 창출**: 시니어를 위한 의미 있는 일자리 제공
 - 📱 **간편한 사용**: 음성 인식 기반 직관적인 UI/UX
 
+### 📸 주요 화면 시연
+
+<div align="center">
+
+#### 홈 화면
+<img src="public/demos/home-screen.png" alt="SeeNear 홈 화면" width="600"/>
+
+*따뜻한 디자인의 홈 화면에서 역할을 선택합니다*
+
+#### AI 매칭 콜 화면
+<img src="public/demos/ai-call-screen.png" alt="AI 매칭 콜 화면" width="600"/>
+
+*실시간 AI 매칭 후 전화 연결 화면*
+
+</div>
+
 ---
 
 ## ✨ 주요 기능
