@@ -49,17 +49,24 @@
 ### 📸 주요 화면 시연
 
 <div align="center">
-
-#### 홈 화면
-<img src="public/demos/home-screen.png" alt="SeeNear 홈 화면" width="600"/>
-
-*따뜻한 디자인의 홈 화면에서 역할을 선택합니다*
-
-#### AI 매칭 콜 화면
-<img src="public/demos/ai-call-screen.png" alt="AI 매칭 콜 화면" width="600"/>
-
-*실시간 AI 매칭 후 전화 연결 화면*
-
+  <table>
+    <tr>
+      <td align="center">
+        <img src="./public/demos/home-screen.png" alt="SeeNear 홈 화면" width="100%" />
+        <br />
+        <b>홈 화면</b>
+        <br />
+        <i>따뜻한 디자인의 홈 화면에서 역할을 선택합니다</i>
+      </td>
+      <td align="center">
+        <img src="./public/demos/ai-call-screen.png" alt="AI 매칭 콜 화면" width="100%" />
+        <br />
+        <b>AI 매칭 콜 화면</b>
+        <br />
+        <i>실시간 AI 매칭 후 전화 연결 화면</i>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ---
