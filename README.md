@@ -13,6 +13,12 @@
 
 [🌐 Live Demo](https://see-near-mvp-deploy.vercel.app) | [📖 Demo Guide](DEMO_GUIDE.md)
 
+### 📱 모바일에서 바로 접속하기
+
+<img src="public/qr-code.png" alt="SeeNear QR Code" width="200"/>
+
+*QR 코드를 스캔하여 모바일에서 바로 체험해보세요!*
+
 </div>
 
 ---
@@ -247,12 +253,12 @@ seenear/
 
 ## 📄 라이선스
 
-이 프로젝트는 개인 포트폴리오 목적으로 제작되었습니다.
+이 프로젝트는 EY한영-JA Growth to Professional 2026 경연대회 출품작입니다.
 
 ---
 
 ## 🙏 감사의 말
 
-SeeNear MVP를 방문해 주셔서 감사합니다. 이웃과 함께하는 따뜻한 돌봄 서비스를 만들어가겠습니다.
+SeeNear MVP를 방문해 주셔서 감사합니다. 이웃과 함께하는 따뜻한 일자리 서비스를 만들어가겠습니다.
 
 **Made with 🧡 by Yongrak Park**
