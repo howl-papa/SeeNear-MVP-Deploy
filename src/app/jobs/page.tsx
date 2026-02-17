@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, Clock, Coins, CheckCircle2, Briefcase, Home, Leaf, Phone, PhoneOff } from "lucide-react"
+import { MapPin, Clock, Coins, CheckCircle2, Briefcase, Home, Leaf, Phone, PhoneOff, Bot } from "lucide-react"
 
 // Mock job listings
 const JOB_LISTINGS = [
@@ -66,8 +66,13 @@ export default function JobsPage() {
     const router = useRouter()
     const [selectedCategory, setSelectedCategory] = useState("전체")
     const [appliedJobs, setAppliedJobs] = useState<number[]>([])
-    const [callStatus, setCallStatus] = useState<'none' | 'calling' | 'accepted'>('none')
+    const [callStatus, setCallStatus] = useState<'none' | 'calling' | 'accepted' | 'working' | 'reporting_call' | 'reporting' | 'completed'>('none')
     const [selectedJob, setSelectedJob] = useState<typeof JOB_LISTINGS[0] | null>(null)
+
+    // Demo state for AI Work-Mate (always declared, only used when callStatus === 'working')
+    const [demoStep, setDemoStep] = useState<'waiting' | 'message' | 'analyzing' | 'translated'>('waiting')
+    const [hasSpoken, setHasSpoken] = useState(false)
+    const [reportSpoken, setReportSpoken] = useState(false)
 
     const filteredJobs = selectedCategory === "전체"
         ? JOB_LISTINGS
@@ -110,6 +115,121 @@ export default function JobsPage() {
             }
         }
     }, [callStatus, selectedJob])
+
+    // Reset demo state when entering working status
+    useEffect(() => {
+        if (callStatus === 'working') {
+            setDemoStep('waiting')
+            setHasSpoken(false)
+        }
+    }, [callStatus])
+
+    // TTS function for AI Work-Mate
+    const speakMessage = () => {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel() // Cancel any ongoing speech
+            const utterance = new SpeechSynthesisUtterance(
+                '어르신! 아기가 자고 있어요. 초인종을 누르지 마시고, 문 앞에 조용히 놓아주세요.'
+            )
+            utterance.lang = 'ko-KR'
+            utterance.rate = 0.85 // Slower for seniors
+            utterance.pitch = 1.0
+            utterance.volume = 1.0
+            window.speechSynthesis.speak(utterance)
+        }
+    }
+
+    // Automated scenario for AI Work-Mate demo
+    useEffect(() => {
+        if (callStatus !== 'working') return
+
+        const timers: NodeJS.Timeout[] = []
+
+        // Step 1: Show message after 1.5s
+        timers.push(setTimeout(() => {
+            setDemoStep('message')
+        }, 1500))
+
+        // Step 2: Start analyzing after 2s
+        timers.push(setTimeout(() => {
+            setDemoStep('analyzing')
+        }, 3500))
+
+        // Step 3: Show translation and speak after 2s more
+        timers.push(setTimeout(() => {
+            setDemoStep('translated')
+            if (!hasSpoken) {
+                speakMessage()
+                setHasSpoken(true)
+            }
+        }, 5500))
+
+        return () => timers.forEach(timer => clearTimeout(timer))
+    }, [callStatus])
+
+    // Incoming Call from AI Manager
+    useEffect(() => {
+        if (callStatus === 'reporting_call') {
+            try {
+                if (typeof window !== 'undefined' && window.speechSynthesis) {
+                    const utterance = new SpeechSynthesisUtterance("AI 업무 매니저에게 전화가 왔습니다.")
+                    utterance.lang = 'ko-KR'
+                    window.speechSynthesis.speak(utterance)
+                }
+            } catch (error) {
+                console.error('Speech synthesis not supported:', error)
+            }
+        }
+    }, [callStatus])
+
+    // Reporting Phase - AI Interaction
+    useEffect(() => {
+        if (callStatus === 'reporting') {
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+                // Cancel previous speech
+                window.speechSynthesis.cancel()
+
+                const utterance = new SpeechSynthesisUtterance("수고하셨습니다. 오늘 특이사항이 있으셨나요? 말씀해주세요.")
+                utterance.lang = 'ko-KR'
+                // Wait a bit before speaking to allow UI transition
+                setTimeout(() => {
+                    window.speechSynthesis.speak(utterance)
+                }, 500)
+            }
+
+            // Simulate listening for 5 seconds, then finish
+            const timer = setTimeout(() => {
+                setCallStatus('completed')
+            }, 6000)
+            return () => clearTimeout(timer)
+        }
+    }, [callStatus])
+
+    // TTS function for work completion report
+    const speakReport = () => {
+        if ('speechSynthesis' in window && selectedJob) {
+            window.speechSynthesis.cancel()
+            const reportText = `업무 리포트를 생성했습니다. ${selectedJob.requester}님과 함께 ${selectedJob.title} 업무를 완료했습니다. 특이사항: 반려견 배변 활동 정상 완료. 수행 결과: 정상 완료. 수고하셨습니다!`
+            const utterance = new SpeechSynthesisUtterance(reportText)
+            utterance.lang = 'ko-KR'
+            utterance.rate = 0.9
+            utterance.pitch = 1.0
+            utterance.volume = 1.0
+            window.speechSynthesis.speak(utterance)
+        }
+    }
+
+    // Auto-speak report when work is completed
+    useEffect(() => {
+        if (callStatus === 'completed' && !reportSpoken) {
+            // Wait 1 second before speaking
+            const timer = setTimeout(() => {
+                speakReport()
+                setReportSpoken(true)
+            }, 1000)
+            return () => clearTimeout(timer)
+        }
+    }, [callStatus, reportSpoken])
 
     // Incoming Call Screen
     if (callStatus === 'calling' && selectedJob) {
@@ -187,12 +307,342 @@ export default function JobsPage() {
                         </div>
                     </div>
 
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => setCallStatus('working')}
+                            className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
+                        >
+                            💼 일 시작하기
+                        </button>
+                        <button
+                            onClick={() => router.push('/')}
+                            className="w-full bg-white/20 border-2 border-white text-white py-3 rounded-2xl font-semibold transition-all active:scale-95"
+                        >
+                            뒤로 가기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Working state - AI Work-Mate Communication (Dramatic Demo)
+    if (callStatus === 'working' && selectedJob) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 p-6">
+                <div className="max-w-2xl mx-auto space-y-6 pt-6">
+                    {/* Header */}
+                    <div className="text-center space-y-2">
+                        <h1 className="text-2xl font-bold text-stone-800">업무 진행 중</h1>
+                        <p className="text-stone-600">{selectedJob.requester} 선생님과  SeeNear는 함께 일하고 있습니다.</p>
+                    </div>
+
+                    {/* Meeting Info Card */}
+                    <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+                        <h2 className="font-bold text-stone-800 mb-3">만남 정보</h2>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex items-center justify-between">
+                                <span className="text-stone-500">장소</span>
+                                <span className="font-semibold text-stone-800">{selectedJob.location}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-stone-500">시간</span>
+                                <span className="font-semibold text-stone-800">{selectedJob.time}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-stone-500">시급</span>
+                                <span className="font-semibold text-green-600">{selectedJob.pay}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Message Arrival Animation */}
+                    {demoStep !== 'waiting' && (
+                        <div className="animate-in slide-in-from-top fade-in duration-500">
+                            <div className="bg-white rounded-2xl p-4 shadow-lg border-l-4 border-blue-500">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                    <span className="text-xs text-stone-500 font-medium">수요자 메시지 도착</span>
+                                </div>
+                                <p className="text-sm text-stone-600 italic">
+                                    "Please, Do not ring the bell. Baby is sleeping."
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* AI Analyzing Animation */}
+                    {demoStep === 'analyzing' && (
+                        <div className="animate-in slide-in-from-bottom fade-in duration-500">
+                            <div className="bg-gradient-to-r from-orange-100 to-amber-100 rounded-2xl p-6 border-2 border-orange-200">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center animate-pulse">
+                                        <Bot size={20} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-orange-900">SeeNear AI가 메시지를 분석 중입니다...</p>
+                                        <p className="text-xs text-orange-700">어르신이 이해하기 쉽게 번역하고 있어요</p>
+                                    </div>
+                                </div>
+                                {/* Loading bar */}
+                                <div className="w-full h-2 bg-orange-200 rounded-full overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full animate-pulse" style={{ width: '70%' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* AI Translation Card (Dramatic Reveal) */}
+                    {demoStep === 'translated' && (
+                        <div className="animate-in zoom-in fade-in duration-700">
+                            <div className="bg-white rounded-3xl p-6 shadow-2xl border-4 border-orange-300">
+                                {/* Header */}
+                                <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-orange-100">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center animate-bounce">
+                                        <Bot size={24} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-orange-900">AI Work-Mate</h3>
+                                        <p className="text-xs text-orange-600">어르신 가이드</p>
+                                    </div>
+                                    <span className="ml-auto bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
+                                        실시간 번역
+                                    </span>
+                                </div>
+
+                                {/* Translated Message - Large and Clear */}
+                                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 mb-6 border-2 border-orange-200">
+                                    <p className="text-2xl font-bold text-stone-900 leading-relaxed text-center">
+                                        👴 어르신! <span className="text-red-600">아기가 자고 있어요.</span>
+                                        <br />
+                                        <span className="text-red-600">초인종을 누르지 마시고</span>,
+                                        <br />
+                                        문 앞에 <span className="text-orange-600">조용히</span> 놓아주세요. 🔕
+                                    </p>
+                                </div>
+
+                                {/* Replay Button - Very Large */}
+                                <button
+                                    onClick={speakMessage}
+                                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-6 rounded-2xl font-bold text-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"
+                                >
+                                    <span className="text-4xl">🔊</span>
+                                    다시 듣기
+                                </button>
+
+                                <p className="text-center text-xs text-stone-500 mt-3">
+                                    음성으로 다시 들으시려면 위 버튼을 눌러주세요
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3 pt-4">
+                        <button
+                            onClick={() => setCallStatus('reporting_call')}
+                            className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-95"
+                        >
+                            업무 완료
+                        </button>
+                        <button
+                            onClick={() => setCallStatus('accepted')}
+                            className="w-full bg-white border-2 border-stone-200 text-stone-700 py-3 rounded-2xl font-semibold transition-all active:scale-95"
+                        >
+                            뒤로 가기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Reporting Call - Incoming Call from AI
+    if (callStatus === 'reporting_call') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center p-6">
+                <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in">
+                    <div className="w-32 h-32 bg-white rounded-full mx-auto flex items-center justify-center shadow-2xl animate-pulse">
+                        <Bot size={64} className="text-blue-600" />
+                    </div>
+
+                    <div className="space-y-2">
+                        <h1 className="text-3xl font-bold text-white drop-shadow-lg">AI 업무 매니저</h1>
+                        <p className="text-xl text-white/90">업무 리포트 작성을 위해 전화했습니다</p>
+                    </div>
+
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 text-white">
+                        <p className="text-lg leading-relaxed">
+                            "안녕하세요! 오늘 업무는 어떠셨나요? 잠시 통화 가능하신가요?"
+                        </p>
+                    </div>
+
+                    <div className="flex gap-4 justify-center pt-4">
+                        <button
+                            onClick={() => setCallStatus('working')}
+                            className="w-20 h-20 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-95"
+                        >
+                            <PhoneOff size={32} className="text-white" />
+                        </button>
+                        <button
+                            onClick={() => setCallStatus('reporting')}
+                            className="w-20 h-20 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-95 animate-bounce"
+                        >
+                            <Phone size={32} className="text-white" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Reporting Phase - AI Listening
+    if (callStatus === 'reporting') {
+        return (
+            <div className="min-h-screen bg-stone-900 flex items-center justify-center p-6">
+                <div className="max-w-md w-full text-center space-y-12 animate-in fade-in">
+                    <div className="space-y-4">
+                        <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.5)]">
+                            <Bot size={40} className="text-white" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-white">AI가 듣고 있습니다...</h2>
+                        <p className="text-stone-400">"오늘 특이사항이 있으셨나요?"</p>
+                    </div>
+
+                    {/* Voice Visualizer Animation */}
+                    <div className="flex items-center justify-center gap-2 h-16">
+                        {[...Array(5)].map((_, i) => (
+                            <div
+                                key={i}
+                                className="w-3 bg-blue-500 rounded-full animate-pulse"
+                                style={{
+                                    height: '100%',
+                                    animationDelay: `${i * 0.1}s`,
+                                    animationDuration: '0.8s'
+                                }}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="bg-stone-800 rounded-2xl p-6 border border-stone-700">
+                        <p className="text-stone-300 italic">
+                            "예, 오늘 강아지 산책 잘 다녀왔고 배변도 잘 했습니다. 별다른 문제는 없었어요."
+                        </p>
+                    </div>
+
                     <button
-                        onClick={() => router.push('/')}
-                        className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
+                        onClick={() => setCallStatus('completed')}
+                        className="bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white px-6 py-3 rounded-full text-sm transition-colors"
                     >
-                        홈으로 돌아가기
+                        건너뛰기 (테스트용)
                     </button>
+                </div>
+            </div>
+        )
+    }
+
+    // Work Completed - Voice Report Screen
+    if (callStatus === 'completed' && selectedJob) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+                <div className="max-w-2xl mx-auto space-y-6 pt-6">
+                    {/* Header */}
+                    <div className="text-center space-y-4">
+                        <div className="flex justify-center">
+                            <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-2xl animate-bounce">
+                                <CheckCircle2 size={60} className="text-white" />
+                            </div>
+                        </div>
+                        <h1 className="text-3xl font-bold text-stone-800">업무 완료!</h1>
+                        <p className="text-lg text-stone-600">AI가 업무 리포트를 생성했습니다</p>
+                    </div>
+
+                    {/* AI Report Card */}
+                    <div className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-blue-200">
+                        {/* Header */}
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-100">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                                <Bot size={24} className="text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-blue-900">AI 업무 리포트</h3>
+                                <p className="text-xs text-blue-600">자동 생성됨</p>
+                            </div>
+                            <span className="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                                ✓ 완료
+                            </span>
+                        </div>
+
+                        {/* Report Content */}
+                        <div className="space-y-4 mb-6">
+                            <div className="bg-blue-50 rounded-xl p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-semibold text-blue-900">일자리</span>
+                                    <span className="text-sm text-blue-700">{selectedJob.title}</span>
+                                </div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-semibold text-blue-900">수요자</span>
+                                    <span className="text-sm text-blue-700">{selectedJob.requester}님</span>
+                                </div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-semibold text-blue-900">근무 시간</span>
+                                    <span className="text-sm text-blue-700">{selectedJob.time}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-semibold text-blue-900">시급</span>
+                                    <span className="text-sm font-bold text-green-600">{selectedJob.pay}</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
+                                <h4 className="font-bold text-green-900 mb-2 flex items-center gap-2">
+                                    <span className="text-xl">📋</span>
+                                    특이사항
+                                </h4>
+                                <p className="text-green-800 leading-relaxed">
+                                    • 반려견 배변 활동 정상 완료<br />
+                                    • 수요자 요청사항 모두 이행
+                                </p>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
+                                <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                    <span className="text-xl">✅</span>
+                                    수행 결과
+                                </h4>
+                                <p className="text-xl font-bold text-blue-900 text-center">정상 완료</p>
+                            </div>
+                        </div>
+
+                        {/* Replay Button */}
+                        <button
+                            onClick={speakReport}
+                            className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-6 rounded-2xl font-bold text-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 mb-3"
+                        >
+                            <span className="text-4xl">🔊</span>
+                            리포트 다시 듣기
+                        </button>
+
+                        <p className="text-center text-xs text-stone-500">
+                            음성으로 다시 들으시려면 위 버튼을 눌러주세요
+                        </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => router.push('/')}
+                            className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-95"
+                        >
+                            홈으로 돌아가기
+                        </button>
+                        <button
+                            onClick={() => setCallStatus('working')}
+                            className="w-full bg-white border-2 border-stone-200 text-stone-700 py-3 rounded-2xl font-semibold transition-all active:scale-95"
+                        >
+                            뒤로 가기
+                        </button>
+                    </div>
                 </div>
             </div>
         )

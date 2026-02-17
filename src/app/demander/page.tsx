@@ -2,13 +2,46 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Shield, ShieldCheck, User, MapPin, Award } from "lucide-react"
+import { Shield, ShieldCheck, User, MapPin, Award, HelpCircle, Sparkles, Home } from "lucide-react"
 
 // Mock Candidates
 const CANDIDATES = [
-    { id: 1, name: "김철수 선생님", age: 72, dist: "걸어서 5분", badge: "Gold", jobs: ["반려견케어", "등하원도우미"], desc: "강아지를 너무 좋아해요. 체력 자신 있습니다." },
-    { id: 2, name: "이영희 선생님", age: 68, dist: "걸어서 8분", badge: "Silver", jobs: ["반찬만들기", "아이돌봄"], desc: "손주 셋을 키운 경험으로 따뜻하게 돌봐드려요." },
-    { id: 3, name: "박상훈 선생님", age: 70, dist: "걸어서 12분", badge: "Silver", jobs: ["간단청소", "분리수거"], desc: "꼼꼼하고 깔끔한 성격입니다." },
+    {
+        id: 1,
+        name: "김철수 선생님",
+        age: 72,
+        dist: "걸어서 5분",
+        badge: "Gold",
+        verifiedCenter: "마포노인복지관",
+        jobs: ["반려견케어", "등하원도우미"],
+        desc: "강아지를 너무 좋아해요. 체력 자신 있습니다.",
+        trustScore: 98,
+        tier: "Master"
+    },
+    {
+        id: 2,
+        name: "이영희 선생님",
+        age: 68,
+        dist: "걸어서 8분",
+        badge: "Silver",
+        verifiedCenter: "서대문복지관",
+        jobs: ["반찬만들기", "아이돌봄"],
+        desc: "손주 셋을 키운 경험으로 따뜻하게 돌봐드려요.",
+        trustScore: 92,
+        tier: "Expert"
+    },
+    {
+        id: 3,
+        name: "박상훈 선생님",
+        age: 70,
+        dist: "걸어서 12분",
+        badge: "Silver",
+        verifiedCenter: "용산복지관",
+        jobs: ["간단청소", "분리수거"],
+        desc: "꼼꼼하고 깔끔한 성격입니다.",
+        trustScore: 95,
+        tier: "Expert"
+    },
 ]
 
 const QUICK_SELECT_CATEGORIES = [
@@ -44,6 +77,21 @@ export default function DemanderPage() {
     const router = useRouter()
     const [request, setRequest] = useState("")
     const [isSafe, setIsSafe] = useState(true)
+    const [showTooltip, setShowTooltip] = useState<number | null>(null)
+
+    // Helper function to get tier badge styling
+    const getTierStyle = (tier: string) => {
+        switch (tier) {
+            case "Master":
+                return "bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+            case "Expert":
+                return "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
+            case "Advanced":
+                return "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+            default:
+                return "bg-gradient-to-r from-stone-400 to-stone-500 text-white"
+        }
+    }
 
     const handleRequestChange = (value: string) => {
         setRequest(value)
@@ -59,9 +107,19 @@ export default function DemanderPage() {
     return (
         <div className="min-h-screen bg-stone-50 p-6 flex flex-col items-center">
             <div className="max-w-md w-full space-y-8">
-                <header className="space-y-2 pt-6">
-                    <h1 className="text-2xl font-bold text-stone-800">어떤 도움이 필요하세요?</h1>
-                    <p className="text-stone-500">믿을 수 있는 동네 이웃 선생님이 도와드려요.</p>
+                <header className="space-y-4 pt-6">
+                    <div className="flex justify-between items-center">
+                        <button
+                            onClick={() => router.push('/')}
+                            className="p-2 -ml-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors"
+                        >
+                            <Home size={24} />
+                        </button>
+                    </div>
+                    <div className="space-y-2">
+                        <h1 className="text-2xl font-bold text-stone-800">어떤 도움이 필요하세요?</h1>
+                        <p className="text-stone-500">믿을 수 있는 동네 이웃 선생님이 도와드려요.</p>
+                    </div>
                 </header>
 
                 {/* Quick Select Categories */}
@@ -129,8 +187,12 @@ export default function DemanderPage() {
                                         <User className="w-7 h-7 text-orange-500" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
+                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                                             <h3 className="font-bold text-lg text-stone-800">{candidate.name}</h3>
+                                            <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-200">
+                                                <ShieldCheck size={12} />
+                                                [{candidate.verifiedCenter} 인증]
+                                            </span>
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${candidate.badge === 'Gold'
                                                 ? 'bg-yellow-100 text-yellow-800'
                                                 : 'bg-slate-100 text-slate-700'
@@ -152,7 +214,37 @@ export default function DemanderPage() {
                                                 </span>
                                             ))}
                                         </div>
-                                        <p className="text-sm text-stone-600 leading-relaxed">{candidate.desc}</p>
+                                        <p className="text-sm text-stone-600 leading-relaxed mb-3">{candidate.desc}</p>
+
+                                        {/* AI Trust Score Section */}
+                                        <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg p-4 border-2 border-orange-200">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Sparkles className="w-4 h-4 text-orange-600" />
+                                                    <span className="text-xs font-semibold text-orange-900">SeeNear 신뢰 점수</span>
+                                                    <div className="relative">
+                                                        <HelpCircle
+                                                            className="w-3.5 h-3.5 text-orange-400 cursor-help"
+                                                            onMouseEnter={() => setShowTooltip(candidate.id)}
+                                                            onMouseLeave={() => setShowTooltip(null)}
+                                                        />
+                                                        {showTooltip === candidate.id && (
+                                                            <div className="absolute left-0 top-6 z-10 w-64 bg-stone-800 text-white text-xs rounded-lg p-3 shadow-xl">
+                                                                <div className="absolute -top-1 left-2 w-2 h-2 bg-stone-800 rotate-45"></div>
+                                                                거점 인증, 활동 성실도, 평판을 AI가 종합 분석한 결과입니다
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className={`px-3 py-1 rounded-full text-xs font-bold ${getTierStyle(candidate.tier)}`}>
+                                                    {candidate.tier} 등급
+                                                </div>
+                                            </div>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-4xl font-bold text-orange-900">{candidate.trustScore}</span>
+                                                <span className="text-lg font-semibold text-orange-700">점</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

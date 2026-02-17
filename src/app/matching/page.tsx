@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Phone, PhoneOff, CheckCircle2, MapPin } from "lucide-react"
+import { Phone, PhoneOff, CheckCircle2, MapPin, Bot } from "lucide-react"
 import dynamic from 'next/dynamic'
 
 // Dynamically import map to avoid SSR issues
@@ -54,11 +54,19 @@ export default function MatchingPage() {
                     window.speechSynthesis.speak(utterance)
                 }
             } catch (error) {
-                // Silently fail on mobile devices that don't support speech synthesis
-                console.error('Speech synthesis not supported:', error)
+                console.log('TTS not available:', error)
             }
+
+            // Simulate call acceptance after 3 seconds
+            const timeout = setTimeout(() => {
+                setStatus('accepted')
+            }, 3000)
+
+            return () => clearTimeout(timeout)
         }
     }, [status])
+
+
 
     const handleAccept = () => {
         setStatus('accepted')
@@ -113,14 +121,14 @@ export default function MatchingPage() {
     if (status === 'accepted') {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center p-6">
-                <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in">
+                <div className="max-w-md w-full space-y-6 animate-in fade-in zoom-in">
                     <div className="flex justify-center">
                         <CheckCircle2 size={100} className="text-white drop-shadow-2xl" />
                     </div>
 
                     <div className="space-y-4">
-                        <h1 className="text-4xl font-bold text-white drop-shadow-lg">매칭 성공!</h1>
-                        <p className="text-xl text-white/90">김철수 선생님과 연결되었습니다</p>
+                        <h1 className="text-4xl font-bold text-white drop-shadow-lg text-center">매칭 성공!</h1>
+                        <p className="text-xl text-white/90 text-center">김철수 선생님과 연결되었습니다</p>
                     </div>
 
                     <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 space-y-3 text-white">
@@ -139,15 +147,16 @@ export default function MatchingPage() {
                     </div>
 
                     <button
-                        onClick={() => router.push('/')}
+                        onClick={() => router.push('/demander')}
                         className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
                     >
-                        홈으로 돌아가기
+                        도움이 더 필요해요
                     </button>
                 </div>
             </div>
         )
     }
+
 
     // Analyzing state
     return (
