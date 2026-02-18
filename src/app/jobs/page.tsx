@@ -73,6 +73,7 @@ export default function JobsPage() {
     const [demoStep, setDemoStep] = useState<'waiting' | 'message' | 'analyzing' | 'translated'>('waiting')
     const [hasSpoken, setHasSpoken] = useState(false)
     const [reportSpoken, setReportSpoken] = useState(false)
+    const [showComplete, setShowComplete] = useState(false)
 
     const filteredJobs = selectedCategory === "전체"
         ? JOB_LISTINGS
@@ -121,6 +122,7 @@ export default function JobsPage() {
         if (callStatus === 'working') {
             setDemoStep('waiting')
             setHasSpoken(false)
+            setShowComplete(false)
         }
     }, [callStatus])
 
@@ -129,7 +131,7 @@ export default function JobsPage() {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel() // Cancel any ongoing speech
             const utterance = new SpeechSynthesisUtterance(
-                '어르신! 아기가 자고 있어요. 초인종을 누르지 마시고, 문 앞에 조용히 놓아주세요.'
+                '선생님! 아기가 자고 있습니다. 반려견을 데려가실 때 노크 대신 문자로 알려주세요.'
             )
             utterance.lang = 'ko-KR'
             utterance.rate = 0.85 // Slower for seniors
@@ -163,6 +165,11 @@ export default function JobsPage() {
                 setHasSpoken(true)
             }
         }, 5500))
+
+        // Step 4: Show complete button 3s after translation
+        timers.push(setTimeout(() => {
+            setShowComplete(true)
+        }, 8500))
 
         return () => timers.forEach(timer => clearTimeout(timer))
     }, [callStatus])
@@ -277,7 +284,7 @@ export default function JobsPage() {
     // Job Accepted Screen
     if (callStatus === 'accepted' && selectedJob) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center p-6">
+            <div className="min-h-screen bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center p-6">
                 <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in">
                     <div className="flex justify-center">
                         <CheckCircle2 size={100} className="text-white drop-shadow-2xl" />
@@ -299,7 +306,7 @@ export default function JobsPage() {
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-sm opacity-80">시급</span>
-                            <span className="font-bold text-yellow-200">{selectedJob.pay}</span>
+                            <span className="font-bold text-amber-200">{selectedJob.pay}</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-sm opacity-80">위치</span>
@@ -310,7 +317,7 @@ export default function JobsPage() {
                     <div className="space-y-3">
                         <button
                             onClick={() => setCallStatus('working')}
-                            className="w-full bg-white text-green-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
+                            className="w-full bg-white text-orange-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
                         >
                             💼 일 시작하기
                         </button>
@@ -334,7 +341,7 @@ export default function JobsPage() {
                     {/* Header */}
                     <div className="text-center space-y-2">
                         <h1 className="text-2xl font-bold text-stone-800">업무 진행 중</h1>
-                        <p className="text-stone-600">{selectedJob.requester} 선생님과  SeeNear는 함께 일하고 있습니다.</p>
+                        <p className="text-stone-600"> SeeNear AI와 함께 일하고 있습니다.</p>
                     </div>
 
                     {/* Meeting Info Card */}
@@ -351,7 +358,7 @@ export default function JobsPage() {
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-stone-500">시급</span>
-                                <span className="font-semibold text-green-600">{selectedJob.pay}</span>
+                                <span className="font-semibold text-amber-600">{selectedJob.pay}</span>
                             </div>
                         </div>
                     </div>
@@ -359,13 +366,13 @@ export default function JobsPage() {
                     {/* Message Arrival Animation */}
                     {demoStep !== 'waiting' && (
                         <div className="animate-in slide-in-from-top fade-in duration-500">
-                            <div className="bg-white rounded-2xl p-4 shadow-lg border-l-4 border-blue-500">
+                            <div className="bg-white rounded-2xl p-4 shadow-lg border-l-4 border-orange-400">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                    <span className="text-xs text-stone-500 font-medium">수요자 메시지 도착</span>
+                                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                                    <span className="text-xs text-stone-500 font-medium">요청 메시지 도착</span>
                                 </div>
                                 <p className="text-sm text-stone-600 italic">
-                                    "Please, Do not ring the bell. Baby is sleeping."
+                                    "Baby is sleeping. Please knock when you bring the dog."
                                 </p>
                             </div>
                         </div>
@@ -381,7 +388,7 @@ export default function JobsPage() {
                                     </div>
                                     <div>
                                         <p className="font-bold text-orange-900">SeeNear AI가 메시지를 분석 중입니다...</p>
-                                        <p className="text-xs text-orange-700">어르신이 이해하기 쉽게 번역하고 있어요</p>
+                                        <p className="text-xs text-orange-700">선생님이 이해하기 쉽게 번역하고 있어요</p>
                                     </div>
                                 </div>
                                 {/* Loading bar */}
@@ -403,7 +410,7 @@ export default function JobsPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-orange-900">AI Work-Mate</h3>
-                                        <p className="text-xs text-orange-600">어르신 가이드</p>
+                                        <p className="text-xs text-orange-600">선생님 가이드</p>
                                     </div>
                                     <span className="ml-auto bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
                                         실시간 번역
@@ -413,11 +420,11 @@ export default function JobsPage() {
                                 {/* Translated Message - Large and Clear */}
                                 <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 mb-6 border-2 border-orange-200">
                                     <p className="text-2xl font-bold text-stone-900 leading-relaxed text-center">
-                                        👴 어르신! <span className="text-red-600">아기가 자고 있어요.</span>
+                                        선생님! <span className="text-red-600">아기가 자고 있습니다.</span>
                                         <br />
-                                        <span className="text-red-600">초인종을 누르지 마시고</span>,
+                                        반려견을 <span className="text-orange-600">데려가실 때</span>
                                         <br />
-                                        문 앞에 <span className="text-orange-600">조용히</span> 놓아주세요. 🔕
+                                        <span className="text-red-600">노크 대신</span> 문자로 알려주세요. 🐕
                                     </p>
                                 </div>
 
@@ -439,12 +446,18 @@ export default function JobsPage() {
 
                     {/* Action Buttons */}
                     <div className="space-y-3 pt-4">
-                        <button
-                            onClick={() => setCallStatus('reporting_call')}
-                            className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-95"
-                        >
-                            업무 완료
-                        </button>
+                        {showComplete ? (
+                            <button
+                                onClick={() => setCallStatus('reporting_call')}
+                                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-95 animate-in fade-in zoom-in duration-500"
+                            >
+                                ✅ 업무 완료
+                            </button>
+                        ) : (
+                            <div className="w-full bg-orange-100 border-2 border-orange-200 text-orange-700 py-4 rounded-2xl font-bold text-lg text-center animate-pulse">
+                                🔄 업무 진행 중...
+                            </div>
+                        )}
                         <button
                             onClick={() => setCallStatus('accepted')}
                             className="w-full bg-white border-2 border-stone-200 text-stone-700 py-3 rounded-2xl font-semibold transition-all active:scale-95"
@@ -460,7 +473,7 @@ export default function JobsPage() {
     // Reporting Call - Incoming Call from AI
     if (callStatus === 'reporting_call') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center p-6">
+            <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center p-6">
                 <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in">
                     <div className="w-32 h-32 bg-white rounded-full mx-auto flex items-center justify-center shadow-2xl animate-pulse">
                         <Bot size={64} className="text-blue-600" />
@@ -499,14 +512,14 @@ export default function JobsPage() {
     // Reporting Phase - AI Listening
     if (callStatus === 'reporting') {
         return (
-            <div className="min-h-screen bg-stone-900 flex items-center justify-center p-6">
+            <div className="min-h-screen bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center p-6">
                 <div className="max-w-md w-full text-center space-y-12 animate-in fade-in">
                     <div className="space-y-4">
-                        <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.5)]">
-                            <Bot size={40} className="text-white" />
+                        <div className="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(251,146,60,0.5)] animate-pulse">
+                            <Bot size={40} className="text-orange-500" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white">AI가 듣고 있습니다...</h2>
-                        <p className="text-stone-400">"오늘 특이사항이 있으셨나요?"</p>
+                        <h2 className="text-2xl font-bold text-white drop-shadow-lg">AI가 듣고 있습니다...</h2>
+                        <p className="text-white/80">"오늘 특이사항이 있으셨나요?"</p>
                     </div>
 
                     {/* Voice Visualizer Animation */}
@@ -514,7 +527,7 @@ export default function JobsPage() {
                         {[...Array(5)].map((_, i) => (
                             <div
                                 key={i}
-                                className="w-3 bg-blue-500 rounded-full animate-pulse"
+                                className="w-3 bg-white rounded-full animate-pulse"
                                 style={{
                                     height: '100%',
                                     animationDelay: `${i * 0.1}s`,
@@ -524,15 +537,15 @@ export default function JobsPage() {
                         ))}
                     </div>
 
-                    <div className="bg-stone-800 rounded-2xl p-6 border border-stone-700">
-                        <p className="text-stone-300 italic">
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
+                        <p className="text-white italic">
                             "예, 오늘 강아지 산책 잘 다녀왔고 배변도 잘 했습니다. 별다른 문제는 없었어요."
                         </p>
                     </div>
 
                     <button
                         onClick={() => setCallStatus('completed')}
-                        className="bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white px-6 py-3 rounded-full text-sm transition-colors"
+                        className="bg-white/20 hover:bg-white/30 text-white/80 hover:text-white px-6 py-3 rounded-full text-sm transition-colors border border-white/30"
                     >
                         건너뛰기 (테스트용)
                     </button>
@@ -544,80 +557,80 @@ export default function JobsPage() {
     // Work Completed - Voice Report Screen
     if (callStatus === 'completed' && selectedJob) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 p-6">
                 <div className="max-w-2xl mx-auto space-y-6 pt-6">
                     {/* Header */}
                     <div className="text-center space-y-4">
                         <div className="flex justify-center">
-                            <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-2xl animate-bounce">
+                            <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center shadow-2xl animate-bounce">
                                 <CheckCircle2 size={60} className="text-white" />
                             </div>
                         </div>
                         <h1 className="text-3xl font-bold text-stone-800">업무 완료!</h1>
-                        <p className="text-lg text-stone-600">AI가 업무 리포트를 생성했습니다</p>
+                        <p className="text-lg text-stone-600">AI Work-Mate가 업무 리포트를 생성했습니다</p>
                     </div>
 
                     {/* AI Report Card */}
-                    <div className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-blue-200">
+                    <div className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-orange-200">
                         {/* Header */}
-                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-100">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-orange-100">
+                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center">
                                 <Bot size={24} className="text-white" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-blue-900">AI 업무 리포트</h3>
-                                <p className="text-xs text-blue-600">자동 생성됨</p>
+                                <h3 className="text-xl font-bold text-orange-900">업무 리포트</h3>
+                                <p className="text-xs text-orange-600">SeeNear AI로 자동 생성됨</p>
                             </div>
-                            <span className="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                            <span className="ml-auto bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
                                 ✓ 완료
                             </span>
                         </div>
 
                         {/* Report Content */}
                         <div className="space-y-4 mb-6">
-                            <div className="bg-blue-50 rounded-xl p-4">
+                            <div className="bg-orange-50 rounded-xl p-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-semibold text-blue-900">일자리</span>
-                                    <span className="text-sm text-blue-700">{selectedJob.title}</span>
+                                    <span className="text-sm font-semibold text-orange-900">일자리</span>
+                                    <span className="text-sm text-orange-700">{selectedJob.title}</span>
                                 </div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-semibold text-blue-900">수요자</span>
-                                    <span className="text-sm text-blue-700">{selectedJob.requester}님</span>
+                                    <span className="text-sm font-semibold text-orange-900">수요자</span>
+                                    <span className="text-sm text-orange-700">{selectedJob.requester}님</span>
                                 </div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-semibold text-blue-900">근무 시간</span>
-                                    <span className="text-sm text-blue-700">{selectedJob.time}</span>
+                                    <span className="text-sm font-semibold text-orange-900">근무 시간</span>
+                                    <span className="text-sm text-orange-700">{selectedJob.time}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-blue-900">시급</span>
-                                    <span className="text-sm font-bold text-green-600">{selectedJob.pay}</span>
+                                    <span className="text-sm font-semibold text-orange-900">시급</span>
+                                    <span className="text-sm font-bold text-amber-600">{selectedJob.pay}</span>
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
-                                <h4 className="font-bold text-green-900 mb-2 flex items-center gap-2">
+                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border-2 border-orange-200">
+                                <h4 className="font-bold text-orange-900 mb-2 flex items-center gap-2">
                                     <span className="text-xl">📋</span>
                                     특이사항
                                 </h4>
-                                <p className="text-green-800 leading-relaxed">
+                                <p className="text-orange-800 leading-relaxed">
                                     • 반려견 배변 활동 정상 완료<br />
                                     • 수요자 요청사항 모두 이행
                                 </p>
                             </div>
 
-                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
-                                <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border-2 border-amber-200">
+                                <h4 className="font-bold text-amber-900 mb-2 flex items-center gap-2">
                                     <span className="text-xl">✅</span>
                                     수행 결과
                                 </h4>
-                                <p className="text-xl font-bold text-blue-900 text-center">정상 완료</p>
+                                <p className="text-xl font-bold text-amber-900 text-center">정상 완료</p>
                             </div>
                         </div>
 
                         {/* Replay Button */}
                         <button
                             onClick={speakReport}
-                            className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-6 rounded-2xl font-bold text-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 mb-3"
+                            className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-6 rounded-2xl font-bold text-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 mb-3"
                         >
                             <span className="text-4xl">🔊</span>
                             리포트 다시 듣기
@@ -632,7 +645,7 @@ export default function JobsPage() {
                     <div className="space-y-3">
                         <button
                             onClick={() => router.push('/')}
-                            className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-95"
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-95"
                         >
                             홈으로 돌아가기
                         </button>

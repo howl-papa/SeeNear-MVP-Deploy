@@ -217,7 +217,7 @@ export default function SeniorPage() {
                     </div>
                     <div className="space-y-3">
                         <h1 className="text-3xl font-bold text-white drop-shadow-lg">분석 완료!</h1>
-                        <p className="text-xl text-white/90">어르신에게 딱 맞는 일자리를 찾았어요</p>
+                        <p className="text-xl text-white/90">선생님에게 딱 맞는 일자리를 찾았어요</p>
                     </div>
                     <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 text-white">
                         <p className="text-sm animate-pulse">AI가 최적의 일자리를 매칭하고 있습니다...</p>
