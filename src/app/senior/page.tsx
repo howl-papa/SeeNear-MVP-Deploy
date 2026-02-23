@@ -356,7 +356,9 @@ export default function SeniorPage() {
                                         {seniorAuthInfo?.name || seniorProfile.name} 선생님은
                                     </span>
                                     {' '}
-                                    {seniorProfile.recommendReason ?? '수많은 생활 지혜를 가지고 계신 만큼, 지역 사회에 큰 도움이 되어주실 수 있어 추천해 드립니다.'}
+                                    {seniorProfile.recommendReason
+                                        ? seniorProfile.recommendReason.replace(/^(선생님은|선생님께서?는?)\s*/, '')
+                                        : '수많은 생활 지혜를 가지고 계신 만큼, 지역 사회에 큰 도움이 되어주실 수 있어 추천해 드립니다.'}
                                 </p>
                             </div>
                         </div>

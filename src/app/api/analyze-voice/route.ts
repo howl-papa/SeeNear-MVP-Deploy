@@ -63,7 +63,7 @@ async function analyzeWithGPT(openai: OpenAI, transcript: string, labels: string
 [규칙]
 - 일자리는 정확히 3개.
 - 시급은 12,000~20,000원 범위.
-- **매칭 이유(recommendReason)와 일자리별 추천 이유는 반드시 짧고 간결한 한 문장으로 작성하세요.**
+- **추천 사유(recommendReason)는 절대 '선생님은' 또는 '[성함] 선생님은'으로 시작하지 마세요.** (이미 UI에서 해당 문구가 앞에 붙습니다) 바로 핵심 근거부터 서술하세요. (예: '다양한 가사 지원 경험이...' 로 시작)
 - 모든 설명은 다정하고 정중한 한국어 존댓말로 작성하세요.`,
             },
             {
