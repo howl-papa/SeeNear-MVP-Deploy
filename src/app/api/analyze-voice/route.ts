@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI, { toFile } from 'openai'
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-})
-
 interface AnalysisResult {
     name: string
     summary: string
@@ -32,7 +28,7 @@ const FALLBACK_RESULT: AnalysisResult = {
 /**
  * GPT-4o-mini를 사용해 음성 텍스트에서 경력 요약 + 추천 일자리를 JSON으로 반환
  */
-async function analyzeWithGPT(transcript: string, labels: string[] = []): Promise<AnalysisResult> {
+async function analyzeWithGPT(openai: OpenAI, transcript: string, labels: string[] = []): Promise<AnalysisResult> {
     const contextStr = labels.length > 0 ? `선택된 역량/상태: ${labels.join(', ')}` : ''
 
     const completion = await openai.chat.completions.create({
@@ -98,6 +94,10 @@ ${contextStr}
 
 
 export async function POST(request: NextRequest) {
+    const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    })
+
     // API 키 유효성 사전 검사 — 한글 플레이스홀더가 남아있으면 명확한 에러 반환
     const apiKey = process.env.OPENAI_API_KEY ?? ''
     if (!apiKey || !/^[\x00-\x7F]+$/.test(apiKey)) {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         // 경로 A: 데모용 fallback_text (오디오 없이 텍스트 직접 전달)
         const fallbackText = formData.get('fallback_text') as string | null
         if (fallbackText) {
-            const result = await analyzeWithGPT(fallbackText, labels)
+            const result = await analyzeWithGPT(openai, fallbackText, labels)
             return NextResponse.json({ transcript: fallbackText, ...result })
         }
 
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Step 2: GPT-4o-mini — 텍스트 → 경력 분석 + 일자리 추천
-        const result = await analyzeWithGPT(transcript, labels)
+        const result = await analyzeWithGPT(openai, transcript, labels)
 
         return NextResponse.json({ transcript, ...result })
     } catch (error: unknown) {

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI, { toFile } from 'openai'
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-})
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+    const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    })
+
     const apiKey = process.env.OPENAI_API_KEY ?? ''
     if (!apiKey || !/^[\x00-\x7F]+$/.test(apiKey)) {
         return NextResponse.json(
