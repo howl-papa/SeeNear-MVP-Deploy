@@ -1,75 +1,62 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 
 export function useVoiceRecorder() {
     const [isRecording, setIsRecording] = useState(false)
-    const [transcript, setTranscript] = useState("")
     const [permissionError, setPermissionError] = useState(false)
-    const recognitionRef = useRef<any>(null)
+    const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
 
-    useEffect(() => {
-        if (typeof window !== 'undefined' && (window as any).webkitSpeechRecognition) {
-            const SpeechRecognition = (window as any).webkitSpeechRecognition
-            recognitionRef.current = new SpeechRecognition()
-            recognitionRef.current.continuous = true
-            recognitionRef.current.interimResults = true
-            recognitionRef.current.lang = 'ko-KR'
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+    const chunksRef = useRef<Blob[]>([])
 
-            recognitionRef.current.onresult = (event: any) => {
-                let finalTranscript = ""
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript
-                    } else {
-                        finalTranscript += event.results[i][0].transcript
-                    }
-                }
-                setTranscript(prev => prev + finalTranscript)
-            }
-
-            recognitionRef.current.onerror = (event: any) => {
-                if (event.error === 'no-speech') {
-                    return
-                }
-
-                if (event.error === 'not-allowed' || event.error === 'permission-denied' || event.error === 'service-not-allowed') {
-                    console.warn("Speech recognition permission denied or service unavailable. Falling back to manual mode.")
-                    setPermissionError(true)
-                } else {
-                    console.error("Speech recognition error", event.error)
-                    setPermissionError(true)
-                }
-                setIsRecording(false)
-            }
-
-            recognitionRef.current.onend = () => {
-                setIsRecording(false)
-            }
-        }
-    }, [])
-
-    const startRecording = () => {
+    const startRecording = async () => {
         setPermissionError(false)
-        if (recognitionRef.current) {
-            try {
-                setTranscript("")
-                recognitionRef.current.start()
-                setIsRecording(true)
-            } catch (e) {
-                console.error("Start error", e)
+        setAudioBlob(null)
+        chunksRef.current = []
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+            // 브라우저 호환성 고려: wav 우선, 지원 안 되면 기본값 사용
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
+                : MediaRecorder.isTypeSupported('audio/mp4')
+                    ? 'audio/mp4'
+                    : ''
+
+            const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+            mediaRecorderRef.current = recorder
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunksRef.current.push(e.data)
+                }
             }
-        } else {
-            alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 사용해주세요.")
+
+            recorder.onstop = () => {
+                const blob = new Blob(chunksRef.current, {
+                    type: mimeType || 'audio/webm',
+                })
+                setAudioBlob(blob)
+                // 스트림 해제
+                stream.getTracks().forEach((track) => track.stop())
+            }
+
+            recorder.start(250) // 250ms 단위로 청크 수집
+            setIsRecording(true)
+        } catch (err) {
+            console.error('MediaRecorder error:', err)
+            setPermissionError(true)
         }
     }
 
     const stopRecording = () => {
-        if (recognitionRef.current) {
-            recognitionRef.current.stop()
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop()
             setIsRecording(false)
         }
     }
 
-    return { isRecording, transcript, startRecording, stopRecording, permissionError }
+    return { isRecording, audioBlob, startRecording, stopRecording, permissionError }
 }

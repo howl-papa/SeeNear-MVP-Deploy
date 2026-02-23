@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Award, ShieldCheck, MapPin, Sparkles, Mic, MapPinned } from "lucide-react"
+import { CheckCircle2, ShieldCheck, MapPin, Sparkles, Mic, MapPinned, Square, Loader2 } from "lucide-react"
 import { VoiceRecorder } from "@/components/voice-recorder"
 import { useStore } from "@/lib/store"
+import { RecommendedJob } from "@/lib/store"
 import dynamic from 'next/dynamic'
 
 // Dynamically import map to avoid SSR issues
@@ -19,18 +20,18 @@ const CHECKLIST_ITEMS = [
     { id: 6, label: "안전 교육 이수했어요" }
 ]
 
-const RECOMMENDED_JOBS = [
-    { id: 1, title: "반려견 산책 도우미", location: "걸어서 5분", pay: "15,000원/시간", reason: "반려견 경험이 많으셔서" },
-    { id: 2, title: "등하원 지도", location: "걸어서 8분", pay: "18,000원/시간", reason: "아이 돌봄 경험이 있으셔서" },
-    { id: 3, title: "간단한 청소", location: "걸어서 3분", pay: "14,000원/시간", reason: "체력이 좋으셔서" },
-]
 
 export default function SeniorPage() {
     const router = useRouter()
-    const [showConsent, setShowConsent] = useState(true)
-    const [step, setStep] = useState<'checklist' | 'voice' | 'analyzing' | 'jobs'>('checklist')
+    const [showConsent, setShowConsent] = useState(false)
+    const [step, setStep] = useState<'auth' | 'checklist' | 'voice' | 'analyzing' | 'jobs'>('auth')
+    const [pin, setPin] = useState('')
+    const [pinError, setPinError] = useState('')
     const [checkedItems, setCheckedItems] = useState<number[]>([])
     const seniorProfile = useStore(state => state.seniorProfile)
+    const seniorAuthInfo = useStore(state => state.seniorAuthInfo)
+    const setSeniorAuthInfo = useStore(state => state.setSeniorAuthInfo)
+    const setCheckedLabels = useStore(state => state.setCheckedLabels)
 
     // Auto-transition from analyzing to jobs screen
     useEffect(() => {
@@ -50,19 +51,38 @@ export default function SeniorPage() {
 
     const handleNext = () => {
         if (checkedItems.length >= 3) {
+            const labels = checkedItems.map(id => CHECKLIST_ITEMS.find(item => item.id === id)?.label || '')
+            setCheckedLabels(labels)
             setStep('voice')
+        }
+    }
+
+    const handleAuth = () => {
+        if (pin === '2026') {
+            setSeniorAuthInfo({
+                name: '김철수',
+                birthYear: '1960',
+                centerName: '종로 노인종합복지관'
+            })
+            setShowConsent(true)
+        } else {
+            setPinError('올바른 인증 번호가 아닙니다.')
+            setPin('')
         }
     }
 
     const handleConsent = () => {
         setShowConsent(false)
+        setStep('checklist')
     }
 
     const handleDecline = () => {
         router.push('/')
     }
 
-    // Consent Modal
+    // --- RENDERING LOGIC ---
+
+    // Consent Modal (Higher priority than step screens)
     if (showConsent) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-orange-400 to-amber-500 p-6 flex items-center justify-center">
@@ -134,12 +154,86 @@ export default function SeniorPage() {
         )
     }
 
+    // Step 0: PIN Authentication
+    if (step === 'auth') {
+        return (
+            <div className="min-h-screen bg-stone-50 p-6 flex flex-col items-center justify-center">
+                <div className="max-w-md w-full space-y-8 animate-in fade-in slide-in-from-bottom duration-500">
+                    <div className="text-center space-y-4">
+                        <div className="w-20 h-20 bg-orange-100 rounded-2xl mx-auto flex items-center justify-center shadow-sm">
+                            <ShieldCheck className="w-10 h-10 text-orange-500" />
+                        </div>
+                        <h1 className="text-3xl font-bold text-stone-800 leading-tight">
+                            복지관에서 안내받은<br />인증 번호 4자리를 입력하세요.
+                        </h1>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex justify-center gap-3">
+                            {[0, 1, 2, 3].map((i) => (
+                                <div
+                                    key={i}
+                                    className={`w-14 h-20 bg-white border-2 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-sm transition-all
+                                        ${pinError ? 'border-red-300 bg-red-50' : pin.length === i ? 'border-orange-400 ring-4 ring-orange-50' : 'border-stone-200'}
+                                    `}
+                                >
+                                    {pin[i] || ''}
+                                </div>
+                            ))}
+                        </div>
+
+                        {pinError && (
+                            <p className="text-center text-red-500 font-semibold animate-bounce">
+                                {pinError}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, 'delete'].map((num, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => {
+                                    setPinError('')
+                                    if (num === 'delete') {
+                                        setPin(prev => prev.slice(0, -1))
+                                    } else if (typeof num === 'number' && pin.length < 4) {
+                                        setPin(prev => prev + num)
+                                    }
+                                }}
+                                className={`h-16 rounded-2xl text-2xl font-bold transition-all active:scale-90
+                                    ${typeof num === 'number' ? 'bg-white text-stone-700 shadow-sm hover:bg-stone-50' : 'text-stone-400'}
+                                `}
+                            >
+                                {num === 'delete' ? '←' : num}
+                            </button>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={handleAuth}
+                        disabled={pin.length < 4}
+                        className={`w-full py-5 rounded-2xl font-bold text-xl shadow-lg transition-all
+                            ${pin.length === 4
+                                ? 'bg-orange-500 hover:bg-orange-600 text-white active:scale-95'
+                                : 'bg-stone-200 text-stone-400 cursor-not-allowed'}
+                        `}
+                    >
+                        인증하기
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     if (step === 'checklist') {
         return (
             <div className="min-h-screen bg-stone-50 p-6 flex flex-col items-center justify-center">
                 <div className="max-w-md w-full space-y-8">
                     <div className="text-center space-y-2">
-                        <h1 className="text-3xl font-bold text-stone-800">선생님, 환영합니다</h1>
+                        <h1 className="text-3xl font-bold text-stone-800 whitespace-pre-wrap">
+                            {seniorAuthInfo ? `${seniorAuthInfo.centerName} \n ${seniorAuthInfo.name} 선생님, 환영합니다` : '선생님, 환영합니다'}
+                        </h1>
                         <p className="text-stone-600 text-lg">해당되는 내용을 모두 선택해주세요.</p>
                     </div>
 
@@ -238,7 +332,9 @@ export default function SeniorPage() {
                             <Sparkles size={16} />
                             AI 추천
                         </div>
-                        <h1 className="text-3xl font-bold text-stone-800">{seniorProfile.name} 선생님!</h1>
+                        <h1 className="text-3xl font-bold text-stone-800">
+                            {seniorAuthInfo?.name && seniorProfile.name === '선생님' ? `${seniorAuthInfo.name} 선생님!` : seniorProfile.name.includes('선생님') ? seniorProfile.name : `${seniorProfile.name} 선생님!`}
+                        </h1>
                         <p className="text-lg text-stone-600">집 근처에 이런 일감이 있어요!</p>
                     </div>
 
@@ -255,44 +351,53 @@ export default function SeniorPage() {
                             </div>
                             <div>
                                 <h3 className="font-bold text-orange-900 mb-1">AI 추천 이유</h3>
-                                <p className="text-orange-800">
-                                    {seniorProfile.name} 선생님은 <span className="font-bold">반려견 경험이 많으셔서</span> 이 일자리들을 추천해요!
+                                <p className="text-orange-800 leading-relaxed">
+                                    <span className="font-bold">
+                                        {seniorAuthInfo?.name || seniorProfile.name} 선생님은
+                                    </span>
+                                    {' '}
+                                    {seniorProfile.recommendReason ?? '수많은 생활 지혜를 가지고 계신 만큼, 지역 사회에 큰 도움이 되어주실 수 있어 추천해 드립니다.'}
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     {/* Job Cards */}
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-bold text-stone-800">추천 일자리 ({RECOMMENDED_JOBS.length}개)</h2>
-                        {RECOMMENDED_JOBS.map((job, idx) => (
-                            <div
-                                key={job.id}
-                                className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom"
-                                style={{ animationDelay: `${idx * 150}ms` }}
-                            >
-                                <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <MapPin className="w-6 h-6 text-orange-500" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-lg text-stone-800 mb-1">{job.title}</h3>
-                                        <div className="flex items-center gap-3 text-sm text-stone-500 mb-2">
-                                            <span className="flex items-center gap-1">
-                                                <MapPin size={14} className="text-orange-500" />
-                                                {job.location}
-                                            </span>
-                                            <span className="font-bold text-green-600">{job.pay}</span>
+                    {(() => {
+                        const jobs: RecommendedJob[] = seniorProfile.recommendedJobs ?? []
+                        return (
+                            <div className="space-y-3">
+                                <h2 className="text-lg font-bold text-stone-800">추천 일자리 ({jobs.length}개)</h2>
+                                {jobs.map((job, idx) => (
+                                    <div
+                                        key={job.id}
+                                        className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom"
+                                        style={{ animationDelay: `${idx * 150}ms` }}
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <MapPin className="w-6 h-6 text-orange-500" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-lg text-stone-800 mb-1">{job.title}</h3>
+                                                <div className="flex items-center gap-3 text-sm text-stone-500 mb-2">
+                                                    <span className="flex items-center gap-1">
+                                                        <MapPin size={14} className="text-orange-500" />
+                                                        {job.location}
+                                                    </span>
+                                                    <span className="font-bold text-green-600">{job.pay}</span>
+                                                </div>
+                                                <div className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                                    <Sparkles size={12} />
+                                                    {job.reason}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold">
-                                            <Sparkles size={12} />
-                                            {job.reason}
-                                        </div>
                                     </div>
-                                </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        )
+                    })()}
 
                     {/* Action Buttons */}
                     <div className="space-y-3 pb-6">

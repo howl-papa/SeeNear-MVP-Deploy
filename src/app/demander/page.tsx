@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Shield, ShieldCheck, User, MapPin, Award, HelpCircle, Sparkles, Home } from "lucide-react"
+import { useStore } from "@/lib/store"
 
 // Mock Candidates
 const CANDIDATES = [
@@ -13,8 +14,8 @@ const CANDIDATES = [
         dist: "걸어서 5분",
         badge: "Gold",
         verifiedCenter: "마포노인복지관",
-        jobs: ["반려견케어", "등하원도우미"],
-        desc: "강아지를 너무 좋아해요. 체력 자신 있습니다.",
+        jobs: ["반려동물 산책", "순찰"],
+        desc: "강아지를 너무 좋아해요. 매일 아침 저녁으로 동네를 돌며 건강을 챙깁니다.",
         trustScore: 98,
         tier: "Master"
     },
@@ -25,8 +26,8 @@ const CANDIDATES = [
         dist: "걸어서 8분",
         badge: "Silver",
         verifiedCenter: "서대문복지관",
-        jobs: ["반찬만들기", "아이돌봄"],
-        desc: "손주 셋을 키운 경험으로 따뜻하게 돌봐드려요.",
+        jobs: ["반찬 준비", "하교 지도"],
+        desc: "30년 주부 경력으로 영양 가득한 반찬을 맛있게 준비해 드립니다.",
         trustScore: 92,
         tier: "Expert"
     },
@@ -37,11 +38,83 @@ const CANDIDATES = [
         dist: "걸어서 12분",
         badge: "Silver",
         verifiedCenter: "용산복지관",
-        jobs: ["간단청소", "분리수거"],
-        desc: "꼼꼼하고 깔끔한 성격입니다.",
+        jobs: ["분리수거", "청결 관리"],
+        desc: "꼼꼼하고 부지런하여 약속 시간은 반드시 엄수합니다.",
         trustScore: 95,
         tier: "Expert"
     },
+    {
+        id: 4,
+        name: "정경숙 선생님",
+        age: 65,
+        dist: "걸어서 3분",
+        badge: "Gold",
+        verifiedCenter: "마포노인복지관",
+        jobs: ["약 수령", "하교 지도"],
+        desc: "인자한 미소로 아이들과 소통하는 것을 좋아합니다. 동네 지리도 밝아요.",
+        trustScore: 99,
+        tier: "Master"
+    },
+    {
+        id: 5,
+        name: "최용남 선생님",
+        age: 74,
+        dist: "걸어서 15분",
+        badge: "Bronze",
+        verifiedCenter: "마포복지관",
+        jobs: ["순찰", "분리수거"],
+        desc: "해병대 출신으로 동네 안전만큼은 제가 책임지겠습니다.",
+        trustScore: 88,
+        tier: "Advanced"
+    },
+    {
+        id: 6,
+        name: "김미자 선생님",
+        age: 69,
+        dist: "걸어서 6분",
+        badge: "Silver",
+        verifiedCenter: "서대문복지관",
+        jobs: ["재료 손질", "전단지 배포"],
+        desc: "한식 자격증 보유 중이며, 손이 빠르고 꼼꼼하여 식당 보조에 최적입니다.",
+        trustScore: 94,
+        tier: "Expert"
+    },
+    {
+        id: 7,
+        name: "한석봉 선생님",
+        age: 71,
+        dist: "걸어서 9분",
+        badge: "Gold",
+        verifiedCenter: "용산복지관",
+        jobs: ["청결 관리", "재료 손질"],
+        desc: "성실함 하나로 평생을 살았습니다. 카페 정리는 제게 맡겨주세요.",
+        trustScore: 97,
+        tier: "Master"
+    },
+    {
+        id: 8,
+        name: "조순례 선생님",
+        age: 73,
+        dist: "걸어서 7분",
+        badge: "Silver",
+        verifiedCenter: "마포노인복지관",
+        jobs: ["약 수령", "반찬 준비"],
+        desc: "내 가족의 일처럼 정성스럽게 챙겨드립니다. 믿고 맡겨주세요.",
+        trustScore: 91,
+        tier: "Expert"
+    },
+    {
+        id: 9,
+        name: "배철호 선생님",
+        age: 67,
+        dist: "걸어서 10분",
+        badge: "Bronze",
+        verifiedCenter: "서대문복지관",
+        jobs: ["전단지 배포", "순찰"],
+        desc: "동네 구석구석을 잘 알고 있습니다. 성실하게 뛰어다니겠습니다.",
+        trustScore: 89,
+        tier: "Advanced"
+    }
 ]
 
 const QUICK_SELECT_CATEGORIES = [
@@ -78,6 +151,7 @@ export default function DemanderPage() {
     const [request, setRequest] = useState("")
     const [isSafe, setIsSafe] = useState(true)
     const [showTooltip, setShowTooltip] = useState<number | null>(null)
+    const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
 
     // Helper function to get tier badge styling
     const getTierStyle = (tier: string) => {
@@ -97,12 +171,21 @@ export default function DemanderPage() {
         setRequest(value)
         const containsUnsafe = UNSAFE_KEYWORDS.some(keyword => value.includes(keyword))
         setIsSafe(!containsUnsafe)
+        // Clear label if user types manually
+        setSelectedLabel(null)
     }
 
-    const handleQuickSelect = (template: string) => {
+    const handleQuickSelect = (template: string, label: string) => {
         setRequest(template)
         setIsSafe(true)
+        setSelectedLabel(label)
     }
+
+    // Filtered candidates based on label
+    const filteredCandidates = selectedLabel
+        ? CANDIDATES.filter(c => c.jobs.includes(selectedLabel))
+        : CANDIDATES.slice(0, 3) // Default show top 3 if no selection or manual typing
+
 
     return (
         <div className="min-h-screen bg-stone-50 p-6 flex flex-col items-center">
@@ -132,8 +215,11 @@ export default function DemanderPage() {
                                 {category.items.map((item, itemIdx) => (
                                     <button
                                         key={itemIdx}
-                                        onClick={() => handleQuickSelect(item.template)}
-                                        className="px-3 py-1.5 bg-white border border-stone-200 rounded-full text-sm font-medium text-stone-700 hover:border-orange-300 hover:bg-orange-50 transition-colors"
+                                        onClick={() => handleQuickSelect(item.template, item.label)}
+                                        className={`px-3 py-1.5 border rounded-full text-sm font-medium transition-colors ${selectedLabel === item.label
+                                            ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                                            : 'bg-white border-stone-200 text-stone-700 hover:border-orange-300 hover:bg-orange-50'
+                                            }`}
                                     >
                                         {item.label}
                                     </button>
@@ -176,10 +262,13 @@ export default function DemanderPage() {
                 {isSafe && request.length > 5 && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                         <h2 className="text-lg font-bold text-stone-800">추천 후보</h2>
-                        {CANDIDATES.map(candidate => (
+                        {filteredCandidates.map(candidate => (
                             <div
                                 key={candidate.id}
-                                onClick={() => router.push('/matching')}
+                                onClick={() => {
+                                    useStore.getState().setDemanderRequest(request)
+                                    router.push('/matching')
+                                }}
                                 className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 hover:shadow-md transition-all cursor-pointer hover:border-orange-200 active:scale-[0.98]"
                             >
                                 <div className="flex items-start gap-4">

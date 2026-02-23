@@ -75,8 +75,8 @@
 
 ### 1. 선생님 온보딩 (`/senior`)
 - ✅ 체크리스트 기반 질문 생성
-- 🎤 음성 녹음으로 경력 소개 및 이력서 생성
-- 🤖 AI 자동 요약 생성
+- 🎤 **실시간 음성 인식(STT)**: Whisper API를 이용한 경력 소개 녹음 및 텍스트 변환
+- 🤖 **AI 경력 분석**: GPT-4o-mini를 활용한 맞춤형 프로필 요약 및 추천 사유 생성
 - 📍 위치 기반 서비스 지역 설정
 
 ### 2. 요청자 매칭 (`/demander`)
@@ -88,10 +88,10 @@
 ### 3. 일자리 찾기 (`/jobs`)
 - 🔍 카테고리별 일자리 필터링 (전체, 가정 지원, 환경 관리, 사업 보조)
 - 🤖 **AI Work-Mate**: 수요자의 영문 메시지를 실시간 분석·번역하여 시니어에게 큰 글씨로 안내
-- 📞 **TTS 음성 가이드**: 번역 내용을 자동 음성 출력 (반복 재생 버튼 제공)
-- ⏳ **자동 업무 흐름**: 메시지 도착 → AI 분석 → 번역 완료 → 업무 완료 버튼 순차 전환
-- 📋 **AI 업무 매니저**: 업무 완료 후 AI가 전화로 리포트 수집 및 자동 업무 리포트 생성
-- 🔄 업무 완료 리포트 TTS 음성 출력 및 반복 재생
+- 📞 **Auto-TTS**: 번역 결과가 나오자마지 자동으로 음성 가이드 재생 (UX 최적화)
+- ⏳ **실시간 분석 애니메이션**: 메시지 도착 → AI 분석 중 → 번역 완료 단계별 시각화
+- 📋 **AI 리포트 매니저**: 업무 완료 후 **실제 음성 녹음**을 통해 업무 리포트 자동 생성 (Whisper/GPT 연동)
+- 🔄 생성된 업무 리포트 TTS 음성 출력 및 다시 듣기 기능
 
 ### 4. AI 매칭 시스템 (`/matching`)
 - 🔄 실시간 매칭 프로세스 시각화
@@ -115,9 +115,10 @@
 - **Geocoding**: OpenStreetMap Nominatim API
 
 ### AI & Voice
-- **Voice Recording**: MediaRecorder API
-- **Text-to-Speech**: Web Speech API
-- **AI Summary**: (Mock implementation for MVP)
+- **Voice Recording**: MediaRecorder API + `useVoiceRecorder` Hook
+- **Speech-to-Text**: **OpenAI Whisper-1** (실시간 오디오 파일 변환)
+- **Large Language Model**: **OpenAI GPT-4o-mini** (분석, 요약, 번역)
+- **Text-to-Speech**: Web Speech API (브라우저 내장 TTS)
 
 ### Deployment
 - **Hosting**: Vercel
@@ -143,6 +144,12 @@ npm install
 
 # 개발 서버 실행
 npm run dev
+```
+
+### 🔑 환경 변수 설정
+프로젝트 루트 디렉토리에 `.env.local` 파일을 생성하고 아래 내용을 추가하세요:
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 브라우저에서 [http://localhost:3000](http://localhost:3000) 접속
@@ -234,7 +241,7 @@ seenear/
 - **빌드 시간**: 약 8초
 
 ### 환경 변수
-현재 MVP는 환경 변수가 필요하지 않습니다. (모든 API가 Mock 또는 Public)
+- **OPENAI_API_KEY**: OpenAI 서비스 호출을 위해 필수적으로 설정해야 합니다. (Vercel 프로젝트 설정에서 추가)
 
 ---
 

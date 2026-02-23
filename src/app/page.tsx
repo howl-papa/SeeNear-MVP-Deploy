@@ -21,10 +21,15 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 pb-20 max-w-md mx-auto w-full text-center">
 
         {/* Hero Image Area */}
-        <div className="w-full aspect-[4/3] relative rounded-3xl overflow-hidden mb-10 shadow-xl border-4 border-white transform rotate-1 hover:rotate-0 transition-transform duration-500 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-100 to-amber-200 flex items-center justify-center">
-            <Heart className="w-32 h-32 text-orange-400 opacity-50 animate-pulse" />
-          </div>
+        <div className="w-full relative rounded-3xl overflow-hidden mb-10 shadow-xl border-4 border-white transform rotate-1 hover:rotate-0 transition-transform duration-500 group bg-white">
+          <Image
+            src="/banner.png"
+            alt="SeeNear Banner"
+            width={600}
+            height={450}
+            className="w-full h-auto group-hover:scale-105 transition-transform duration-700"
+            priority
+          />
         </div>
 
         {/* Typography */}

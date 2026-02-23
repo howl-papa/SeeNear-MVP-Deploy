@@ -8,48 +8,81 @@ import dynamic from 'next/dynamic'
 // Dynamically import map to avoid SSR issues
 const MapClient = dynamic(() => import('@/components/map-client'), { ssr: false })
 
+import { useStore } from "@/lib/store"
+
+const getSeniorEmoji = (name: string) => {
+    const femaleNames = ['이영희', '정경숙', '김미자', '조순례', '김주현', '이정은', '한지혜', '김영희']
+    return femaleNames.some(f => name.includes(f)) ? '👵' : '👴'
+}
+
 export default function MatchingPage() {
     const router = useRouter()
+    const demanderRequest = useStore(state => state.demanderRequest)
     const [status, setStatus] = useState<'analyzing' | 'calling' | 'accepted'>('analyzing')
     const [logs, setLogs] = useState<string[]>([])
+    const [matchData, setMatchData] = useState<{
+        seniorName: string
+        distance: string
+        seniorMessage: string
+        matchingLogs: string[]
+    } | null>(null)
 
     useEffect(() => {
-        // Reset state on mount
-        setStatus('analyzing')
-        setLogs([])
-
-        // Simulate matching process
-        const logMessages = [
-            "🔍 후보자 분석 중...",
-            "📍 위치 기반 매칭 시작",
-            "✅ 최적 후보 발견: 김철수 선생님",
-            "📞 연결 시도 중..."
-        ]
-
+        let isMounted = true
         const timeouts: NodeJS.Timeout[] = []
 
-        logMessages.forEach((msg, idx) => {
-            const timeout = setTimeout(() => {
-                setLogs(prev => [...prev, msg])
-                if (idx === logMessages.length - 1) {
-                    setTimeout(() => setStatus('calling'), 1000)
-                }
-            }, idx * 800)
-            timeouts.push(timeout)
-        })
+        const fetchMatch = async () => {
+            try {
+                const res = await fetch('/api/match-senior', {
+                    method: 'POST',
+                    body: JSON.stringify({ demanderRequest }),
+                })
+                const data = await res.json()
+                if (!isMounted) return
+                setMatchData(data)
+
+                // AI 가 생성한 로그를 순차적으로 표시
+                data.matchingLogs.forEach((msg: string, idx: number) => {
+                    const timeout = setTimeout(() => {
+                        if (isMounted) {
+                            setLogs(prev => [...prev, msg])
+                            if (idx === data.matchingLogs.length - 1) {
+                                setTimeout(() => {
+                                    if (isMounted) setStatus('calling')
+                                }, 1500)
+                            }
+                        }
+                    }, idx * 1000)
+                    timeouts.push(timeout)
+                })
+            } catch (error) {
+                console.error('Matching failed:', error)
+            }
+        }
+
+        if (demanderRequest) {
+            setLogs([]) // Clear previous logs if any
+            fetchMatch()
+        } else if (isMounted) {
+            setStatus('analyzing')
+            setLogs(["🔍 환경 설정 확인 중...", "⚠️ 요청 내용을 찾을 수 없습니다."])
+            const t = setTimeout(() => router.push('/demander'), 2000)
+            timeouts.push(t)
+        }
 
         return () => {
-            timeouts.forEach(timeout => clearTimeout(timeout))
+            isMounted = false
+            timeouts.forEach(t => clearTimeout(t))
         }
-    }, [])
-
+    }, [demanderRequest, router])
 
     useEffect(() => {
-        if (status === 'calling') {
-            // Text-to-speech for incoming call (with error handling for mobile)
+        if (status === 'calling' && matchData) {
+            // Text-to-speech for incoming call
             try {
                 if (typeof window !== 'undefined' && window.speechSynthesis) {
-                    const utterance = new SpeechSynthesisUtterance("김철수 선생님으로부터 전화가 왔습니다. 수락하시겠습니까?")
+                    // seniorName already contains "선생님"
+                    const utterance = new SpeechSynthesisUtterance(`${matchData.seniorName}으로부터 전화가 왔습니다. 수락하시겠습니까?`)
                     utterance.lang = 'ko-KR'
                     window.speechSynthesis.speak(utterance)
                 }
@@ -57,14 +90,9 @@ export default function MatchingPage() {
                 console.log('TTS not available:', error)
             }
 
-            // Simulate call acceptance after 3 seconds
-            const timeout = setTimeout(() => {
-                setStatus('accepted')
-            }, 3000)
-
-            return () => clearTimeout(timeout)
+            // Remove auto-accept timeout to allow manual testing
         }
-    }, [status])
+    }, [status, matchData])
 
 
 
@@ -76,26 +104,26 @@ export default function MatchingPage() {
         router.push('/demander')
     }
 
-    if (status === 'calling') {
+    if (status === 'calling' && matchData) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center p-6">
                 <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in">
                     <div className="w-32 h-32 bg-white rounded-full mx-auto flex items-center justify-center shadow-2xl animate-pulse">
-                        <span className="text-6xl">👴</span>
+                        <span className="text-6xl">{getSeniorEmoji(matchData.seniorName)}</span>
                     </div>
 
                     <div className="space-y-2">
-                        <h1 className="text-4xl font-bold text-white drop-shadow-lg">김철수 선생님</h1>
+                        <h1 className="text-4xl font-bold text-white drop-shadow-lg">{matchData.seniorName}</h1>
                         <p className="text-xl text-white/90">전화가 왔습니다</p>
                         <div className="flex items-center justify-center gap-2 text-white/80 text-sm">
                             <MapPin size={16} />
-                            <span>걸어서 5분 거리</span>
+                            <span>{matchData.distance} 거리</span>
                         </div>
                     </div>
 
                     <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 text-white">
                         <p className="text-lg leading-relaxed">
-                            "안녕하세요! 반려견 산책 도와드릴 수 있습니다. 30년 경력으로 믿고 맡겨주세요."
+                            "{matchData.seniorMessage}"
                         </p>
                     </div>
 
@@ -118,7 +146,7 @@ export default function MatchingPage() {
         )
     }
 
-    if (status === 'accepted') {
+    if (status === 'accepted' && matchData) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center p-6">
                 <div className="max-w-md w-full space-y-6 animate-in fade-in zoom-in">
@@ -128,7 +156,7 @@ export default function MatchingPage() {
 
                     <div className="space-y-4">
                         <h1 className="text-4xl font-bold text-white drop-shadow-lg text-center">매칭 성공!</h1>
-                        <p className="text-xl text-white/90 text-center">김철수 선생님과 연결되었습니다</p>
+                        <p className="text-xl text-white/90 text-center">{matchData.seniorName} 선생님과 연결되었습니다</p>
                     </div>
 
                     <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 space-y-3 text-white">
