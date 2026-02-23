@@ -151,7 +151,7 @@ export function VoiceRecorder() {
             const file = new File([blob], `voice.${extension}`, { type: blob.type })
 
             const formData = new FormData()
-            formData.append('audio', file)
+            formData.append('audio', file, `voice.${extension}`)
             formData.append('labels', JSON.stringify(checkedLabels))
 
             const res = await fetch('/api/analyze-voice', {

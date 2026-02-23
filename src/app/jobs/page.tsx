@@ -277,7 +277,8 @@ export default function JobsPage() {
         setIsGeneratingReport(true)
 
         const formData = new FormData()
-        formData.append('audio', blob)
+        const extension = blob.type.includes('mp4') ? 'mp4' : 'webm'
+        formData.append('audio', blob, `report.${extension}`)
         formData.append('jobTitle', selectedJob.title)
         formData.append('requester', selectedJob.requester)
         formData.append('jobDescription', selectedJob.description)

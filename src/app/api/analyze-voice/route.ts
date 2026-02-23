@@ -131,17 +131,33 @@ export async function POST(request: NextRequest) {
         const arrayBuffer = await audioFile.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
-        // MIME 타입에서 코덱 정보 제거 (예: audio/webm;codecs=opus -> audio/webm)
-        // Whisper는 순수 MIME 타입이나 정확한 확장자를 선호합니다.
-        const rawType = audioFile.type || 'audio/webm'
-        const baseMimeType = rawType.split(';')[0].trim()
+        // Normalize MIME type and extension for Whisper compatibility
+        // Some browsers send 'audio/webm;codecs=opus'. Whisper needs 'audio/webm' or just the extension.
+        const rawType = audioFile.type || ''
+        const fileName = audioFile.name || ''
 
-        // 확장자 결정 (mp4, webm, ogg 등 지원 포맷 대응)
+        // Base MIME type (remove codecs)
+        let baseMimeType = rawType.split(';')[0].trim() || 'audio/webm'
+
+        // Extension detection logic
         let extension = 'webm'
-        if (baseMimeType.includes('mp4')) extension = 'mp4'
-        else if (baseMimeType.includes('ogg')) extension = 'ogg'
-        else if (baseMimeType.includes('wav')) extension = 'wav'
-        else if (baseMimeType.includes('mpeg')) extension = 'mp3'
+        if (baseMimeType.includes('mp4') || fileName.endsWith('.mp4') || fileName.endsWith('.m4a')) {
+            extension = 'mp4'
+            baseMimeType = 'audio/mp4'
+        } else if (baseMimeType.includes('ogg') || fileName.endsWith('.ogg')) {
+            extension = 'ogg'
+            baseMimeType = 'audio/ogg'
+        } else if (baseMimeType.includes('wav') || fileName.endsWith('.wav')) {
+            extension = 'wav'
+            baseMimeType = 'audio/wav'
+        } else if (baseMimeType.includes('mpeg') || fileName.endsWith('.mp3')) {
+            extension = 'mp3'
+            baseMimeType = 'audio/mpeg'
+        } else {
+            // Default to webm if unknown but common for MediaRecorder
+            extension = 'webm'
+            baseMimeType = 'audio/webm'
+        }
 
         const whisperFile = await toFile(buffer, `audio.${extension}`, {
             type: baseMimeType,
