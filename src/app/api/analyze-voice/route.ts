@@ -128,12 +128,23 @@ export async function POST(request: NextRequest) {
         }
 
         // Step 1: Whisper STT — 오디오 Blob → 텍스트 변환
-        // Next.js Web File 객체를 OpenAI SDK가 처리할 수 있는 형태로 변환
         const arrayBuffer = await audioFile.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
-        const extension = audioFile.name.endsWith('mp4') ? 'mp4' : 'webm'
+
+        // MIME 타입에서 코덱 정보 제거 (예: audio/webm;codecs=opus -> audio/webm)
+        // Whisper는 순수 MIME 타입이나 정확한 확장자를 선호합니다.
+        const rawType = audioFile.type || 'audio/webm'
+        const baseMimeType = rawType.split(';')[0].trim()
+
+        // 확장자 결정 (mp4, webm, ogg 등 지원 포맷 대응)
+        let extension = 'webm'
+        if (baseMimeType.includes('mp4')) extension = 'mp4'
+        else if (baseMimeType.includes('ogg')) extension = 'ogg'
+        else if (baseMimeType.includes('wav')) extension = 'wav'
+        else if (baseMimeType.includes('mpeg')) extension = 'mp3'
+
         const whisperFile = await toFile(buffer, `audio.${extension}`, {
-            type: audioFile.type || 'audio/webm',
+            type: baseMimeType,
         })
 
         const transcription = await openai.audio.transcriptions.create({

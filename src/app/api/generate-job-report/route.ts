@@ -29,8 +29,19 @@ export async function POST(request: NextRequest) {
         // Step 1: Whisper STT
         const arrayBuffer = await audioFile.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
-        const whisperFile = await toFile(buffer, 'report.webm', {
-            type: 'audio/webm',
+
+        // Normalize MIME type and extension for Whisper compatibility
+        const rawType = audioFile.type || 'audio/webm'
+        const baseMimeType = rawType.split(';')[0].trim()
+
+        let extension = 'webm'
+        if (baseMimeType.includes('mp4')) extension = 'mp4'
+        else if (baseMimeType.includes('ogg')) extension = 'ogg'
+        else if (baseMimeType.includes('wav')) extension = 'wav'
+        else if (baseMimeType.includes('mpeg')) extension = 'mp3'
+
+        const whisperFile = await toFile(buffer, `report.${extension}`, {
+            type: baseMimeType,
         })
 
         const transcription = await openai.audio.transcriptions.create({
