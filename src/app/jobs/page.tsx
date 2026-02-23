@@ -280,6 +280,7 @@ export default function JobsPage() {
         formData.append('audio', blob)
         formData.append('jobTitle', selectedJob.title)
         formData.append('requester', selectedJob.requester)
+        formData.append('jobDescription', selectedJob.description)
 
         try {
             const res = await fetch('/api/generate-job-report', {
@@ -789,11 +790,6 @@ export default function JobsPage() {
                                 </p>
                             </div>
 
-                            {reportData?.transcription && (
-                                <div className="p-3 bg-stone-50 rounded-lg border border-stone-200">
-                                    <p className="text-[10px] text-stone-400 font-mono">음성인식 결과: {reportData.transcription}</p>
-                                </div>
-                            )}
                         </div>
 
                         {/* Replay Button */}
