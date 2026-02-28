@@ -292,7 +292,7 @@ seenear/
 
 ## 📄 라이선스
 
-이 프로젝트는 EY한영-JA Growth to Professional 2026 경연대회 출품작입니다.
+이 프로젝트는 EY한영-JA Growth to Professional 2026 경연대회 최우수상 수상작 입니다.
 
 ---
 
@@ -300,4 +300,4 @@ seenear/
 
 SeeNear MVP를 방문해 주셔서 감사합니다. 이웃과 함께하는 따뜻한 일자리 서비스를 만들어가겠습니다.
 
-**Made with 🧡 by Yongrak Park**
+**Made with 🧡 by GTP 2조**
